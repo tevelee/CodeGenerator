@@ -1,0 +1,349 @@
+{# ---------------------------------------------------------------------------------------------------------------- #}
+
+{% macro HeaderFile(name, baseClass, features, protocols, imports, properties, content, global) %}
+{% for import in imports %}
+#import {{import|raw}}
+{% endfor %}
+
+{{global}}
+@interface {{name}} : {{baseClass}} {% if protocols|length > 0 %}<{{ protocols|join(", ") }}>{% endif %}
+
+
+{% for property in properties %}
+{% set atomicity = property.atomic ? "atomic" : "nonatomic" %}
+{% set reference = property.type ends with "*" ? "copy" : "assign" %}
+{% set attributes = [atomicity, reference] %}
+{% if "ImmutableProperties" in features %}
+{% set attributes = attributes|merge(["readonly"]) %}
+{% endif %}
+@property ({{attributes|join(", ")}}) {{property.type}} {{property.name}};
+{% endfor %}
+
+{{content}}
+@end
+{% endmacro %}
+
+{# ---------------------------------------------------------------------------------------------------------------- #}
+
+{% macro ImplementationFile(name, features, imports, properties, content, global) %}
+{% for import in imports %}
+#import {{import|raw}}
+{% endfor %}
+
+{{global}}
+@implementation {{name}}
+
+{{content}}
+@end
+{% endmacro %}
+
+{# ---------------------------------------------------------------------------------------------------------------- #}
+
+{% macro PropertyKey(name, property) %}k{{name|upperCapitalize}}{{property.name|upperCapitalize}}Key{% endmacro %}
+
+{# ---------------------------------------------------------------------------------------------------------------- #}
+
+{% macro NSCodingGlobalExtern(name, properties) %}
+{% for property in properties %}
+FOUNDATION_EXPORT __unsafe_unretained NSString* const {{_self.PropertyKey(name, property)}};
+{% endfor %}
+{% endmacro %}
+
+{# ---------------------------------------------------------------------------------------------------------------- #}
+
+{% macro NSCodingGlobal(name, properties) %}
+{% for property in properties %}
+__unsafe_unretained NSString* const {{_self.PropertyKey(name, property)}} = @"{{name|upper}}_{{property.name|upper}}";
+{% endfor %}
+{% endmacro %}
+
+{# ---------------------------------------------------------------------------------------------------------------- #}
+
+{% macro NSCoding(name, properties) %}
+
+#pragma mark - 
+#pragma mark NSCoding
+
+- (void)encodeWithCoder:(NSCoder *)encoder
+{
+{% for property in properties %}
+{% if property.type ends with "*" %}
+    [encoder encodeObject:self.{{property.name}} forKey:{{_self.PropertyKey(name, property)}}];
+{% elseif property.type matches "/NSInteger|NSUInteger/" %}
+    [encoder encodeInteger:self.{{property.name}} forKey:{{_self.PropertyKey(name, property)}}];
+{% elseif property.type == "int" %}
+    [encoder encodeInt:self.{{property.name}} forKey:{{_self.PropertyKey(name, property)}}];
+{% endif %}
+{% endfor %}
+}
+
+- (nullable instancetype)initWithCoder:(NSCoder *)decoder
+{
+    self = [super init];
+    if (!self) {
+        return nil;
+    }
+    
+{% for property in properties %}
+{% if property.type ends with "*" %}
+    _{{property.name}} = [decoder decodeObjectForKey:{{_self.PropertyKey(name, property)}}];
+{% elseif property.type matches "/NSInteger|NSUInteger/" %}
+    _{{property.name}} = [decoder decodeIntegerForKey:{{_self.PropertyKey(name, property)}}];
+{% elseif property.type == "int" %}
+    _{{property.name}} = [decoder decodeIntForKey:{{_self.PropertyKey(name, property)}}];
+{% endif %}
+{% endfor %}
+
+    return self;
+}
+{% endmacro %}
+
+{# ---------------------------------------------------------------------------------------------------------------- #}
+
+{% macro NSCopying(name, properties) %}
+
+#pragma mark -
+#pragma mark NSCopying
+
+- (id)copyWithZone:(nullable NSZone *)zone
+{
+    return [[self.class allocWithZone:zone] init{% for property in properties %}{% if loop.first %}With{{property.name|upperCapitalize}}{% else %} {{property.name|lowerCapitalize}}{% endif %}:self.{{property.name}}{% if property.type ends with "*" %}.copy{% endif %}{% endfor %}];
+}
+{% endmacro %}
+
+{# ---------------------------------------------------------------------------------------------------------------- #}
+
+{% macro InitializerHeader(name, properties) %}
++ (instancetype){{name|lowerCapitalize}}{% for property in properties %}{% if loop.first %}With{{property.name|upperCapitalize}}{% else %} {{property.name|lowerCapitalize}}{% endif %}:({{property.type}}){{property.name}}{% endfor %};
+{% endmacro %}
+
+{# ---------------------------------------------------------------------------------------------------------------- #}
+
+{% macro InitializerImplementation(name, properties) %}
++ (instancetype){{name|lowerCapitalize}}{% for property in properties %}{% if loop.first %}With{{property.name|upperCapitalize}}{% else %} {{property.name|lowerCapitalize}}{% endif %}:({{property.type}}){{property.name}}{% endfor %}
+
+{
+    return [[self alloc] init{% for property in properties %}{% if loop.first %}With{{property.name|upperCapitalize}}{% else %} {{property.name|lowerCapitalize}}{% endif %}:{{property.name}}{% endfor %}];
+}
+
+- (instancetype)init{% for property in properties %}{% if loop.first %}With{{property.name|upperCapitalize}}{% else %} {{property.name|lowerCapitalize}}{% endif %}:({{property.type}}){{property.name}}{% endfor %}
+{
+    self = [super init];
+    if (self) { 
+{% for property in properties %}
+{% if property.type ends with "*" %}
+        _{{property.name}} = [{{property.name}} copy];
+{% else %}
+        _{{property.name}} = {{property.name}};
+{% endif %}
+{% endfor %}
+    }
+    return self;
+}
+{% endmacro %}
+
+{# ---------------------------------------------------------------------------------------------------------------- #}
+
+{% macro EqualityHeader(name) %}
+- (BOOL)isEqualTo{{name}}:({{name}} *){{name|lowerCapitalize}};
+{% endmacro %}
+
+{# ---------------------------------------------------------------------------------------------------------------- #}
+
+{% macro EqualityImplementation(name, properties) %}
+
+#pragma mark -
+#pragma mark NSObject (Equality)
+
+- (BOOL)isEqual:(id)object
+{
+    if (self == object) {
+        return YES;
+    }
+    
+    if (![object isKindOfClass:[{{name}} class]]) {
+        return NO;
+    }
+    
+    return [self isEqualTo{{name}}:({{name}} *)object];
+}
+
+- (BOOL)isEqualTo{{name}}:({{name}} *){{name|lowerCapitalize}}
+{
+    if ({{name|lowerCapitalize}} == nil) {
+        return NO;
+    }
+
+{% for property in properties %}
+    BOOL haveEqual{{property.name|upperCapitalize}}Properties = 
+{%- if property.type starts with "NSString" %}
+ (self.{{property.name}}.length == 0 && {{name|lowerCapitalize}}.{{property.name}}.length == 0) || [self.{{property.name}} isEqualToString:{{name|lowerCapitalize}}.{{property.name}}];
+{% elseif property.type matches "/NS(Number|Date|Data|Array|Dictionary).*/" %}
+ (self.{{property.name}} == nil && {{name|lowerCapitalize}}.{{property.name}} == nil) || [self.{{property.name}} isEqualTo{{property.type|replace({"NS": "", " *": "", "*": ""})}}:{{name|lowerCapitalize}}.{{property.name}}];
+{% elseif property.type ends with "*" %}
+ (self.{{property.name}} == nil && {{name|lowerCapitalize}}.{{property.name}} == nil) || [self.{{property.name}} isEqual:{{name|lowerCapitalize}}.{{property.name}}];
+{% elseif property.type matches "/int|NSInteger|NSUInteger|double/" %}
+ self.{{property.name}} == {{name|lowerCapitalize}}.{{property.name}};
+{% else %}
+{% endif %}
+    if (haveEqual{{property.name|upperCapitalize}}Properties == NO) {
+        return NO;
+    }
+{% endfor %}
+    
+    return YES;
+}
+{% endmacro %}
+
+{# ---------------------------------------------------------------------------------------------------------------- #}
+
+{% macro Hashing(name, properties) %}
+
+#pragma mark -
+#pragma mark NSObject (Hashing)
+
+- (NSUInteger)hash
+{
+    return super.hash{% for property in properties %} ^ [{% if property.type ends with "*" %}self.{{property.name}}{% elseif property.type matches "/int|NSInteger|NSUInteger|double|float|CGFloat/" %}@(self.{{property.name}}){% endif %} hash]{% endfor %};
+}
+{% endmacro %}
+
+{# ---------------------------------------------------------------------------------------------------------------- #}
+
+{% macro Description(name, properties) %}
+
+#pragma mark -
+#pragma mark NSObject (Description)
+
+- (NSString *)description
+{
+    NSString* existing = super.description;
+    return [[existing substringToIndex:existing.length - 1] stringByAppendingFormat:@"{% for property in properties %}{% if not loop.first %}, \n\t{% endif %}{{property.name}} = %{{ property.type ends with "*" ? "@" : "ld"}}{% endfor %}>", {% for property in properties %}self.{{property.name}}{% if not loop.last %}, {% endif %}{% endfor %}];
+}
+{% endmacro %}
+
+{# ---------------------------------------------------------------------------------------------------------------- #}
+
+{% macro BuilderHeaderFile(name, properties) %}
+#import <Foundation/Foundation.h>
+#import "{{name}}.h"
+
+@interface {{name}}Builder : NSObject
+
+- ({{name}} *)build;
+
+#pragma mark - Initializers
+
++ (instancetype)builder;
++ (instancetype)builderFrom{{name|upperCapitalize}}:({{name}} *)existing{{name|upperCapitalize}};
+
+#pragma mark - Property setters
+
+{% for property in properties %}
+- (instancetype)with{{property.name|upperCapitalize}}:({{property.type}}){{property.name}};
+{% endfor %}
+
+@end
+{% endmacro %}
+
+{# ---------------------------------------------------------------------------------------------------------------- #}
+
+{% macro BuilderImplementationFile(name, properties) %}
+#import "{{name}}Builder.h"
+
+@implementation {{name}}Builder
+{
+{% for property in properties %}
+    {{property.type}} _{{property.name}};
+{% endfor %}
+}
+- ({{name}} *)build
+{
+    return [{{name}} {{name|lowerCapitalize}}{% for property in properties %}{% if loop.first %}With{{property.name|upperCapitalize}}{% else %} {{property.name|lowerCapitalize}}{% endif %}:_{{property.name}}{% endfor %}];
+}
+
+#pragma mark - Initializers
+
++ (instancetype)builder
+{
+    return [self new];
+}
+
++ (instancetype)builderFrom{{name|upperCapitalize}}:({{name}} *)existing{{name|upperCapitalize}}
+{
+    {{name}}Builder* builder = [self builder];
+{% for property in properties %}
+    builder = [builder with{{property.name|upperCapitalize}}:existing{{name|upperCapitalize}}.{{property.name}}];
+{% endfor %}
+    return builder;
+}
+
+#pragma mark - Property setters
+
+{% for property in properties %}
+- (instancetype)with{{property.name|upperCapitalize}}:({{property.type}}){{property.name}}
+{
+{% if property.type ends with "*" %}
+    _{{property.name}} = [{{property.name}} copy];
+{% else %}
+    _{{property.name}} = {{property.name}};
+{% endif %}
+    return self;
+}
+
+{% endfor %}
+
+@end
+{% endmacro %}
+
+{# ---------------------------------------------------------------------------------------------------------------- #}
+
+{% macro Model(name, properties, features, imports = []) %}
+{% spaceless %}
+{% set header_protocols = [] %}
+{% set header_globals = "" %}
+{% set header_content = "" %}
+{% set implementation_globals = "" %}
+{% set implementation_content = "" %}
+
+{% if "Initializer" in features %}
+    {% set header_content = header_content ~ _self.InitializerHeader(name, properties) %}
+    {% set implementation_content = implementation_content ~ _self.InitializerImplementation(name, properties) %}
+{% endif %}
+
+{% if "Equality" in features %}
+    {% set header_content = header_content ~ "\n" ~ _self.EqualityHeader(name, properties) %}
+    {% set implementation_content = implementation_content ~ _self.EqualityImplementation(name, properties) %}
+{% endif %}
+
+{% if "Hashing" in features %}
+    {% set implementation_content = implementation_content ~ _self.Hashing(name, properties) %}
+{% endif %}
+
+{% if "Description" in features %}
+    {% set implementation_content = implementation_content ~ _self.Description(name, properties) %}
+{% endif %}
+
+{% if "NSCoding" in features %}
+    {% set header_protocols = header_protocols|merge(["NSCoding"]) %}
+    {% set header_globals = header_globals ~ _self.NSCodingGlobalExtern(name, properties) %}
+    {% set implementation_globals = implementation_globals ~ _self.NSCodingGlobal(name, properties) %}
+    {% set implementation_content = implementation_content ~ _self.NSCoding(name, properties) %}
+{% endif %}
+
+{% if "NSCopying" in features %}
+    {% set header_protocols = header_protocols|merge(["NSCopying"]) %}
+    {% set implementation_content = implementation_content ~ _self.NSCopying(name, properties) %}
+{% endif %}
+{% endspaceless %}
+
+{%- file "output/objc/#{name}.h" = _self.HeaderFile(name, "NSObject", features, header_protocols, ["<Foundation/Foundation.h>"]|merge(imports), properties, header_content, header_globals) -%}
+{%- file "output/objc/#{name}.m" = _self.ImplementationFile(name, features, ["\"#{name}.h\""], properties, implementation_content, implementation_globals) -%}
+
+{% if "Builder" in features %}
+{%- file "output/objc/#{name}Builder.h" = _self.BuilderHeaderFile(name, properties) -%}
+{%- file "output/objc/#{name}Builder.m" = _self.BuilderImplementationFile(name, properties) -%}
+{% endif %}
+{% endmacro %}
+
+{# ---------------------------------------------------------------------------------------------------------------- #}

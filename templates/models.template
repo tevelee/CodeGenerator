@@ -1,0 +1,37 @@
+{% import "objc.template" as objc %}
+{% import "swift.template" as swift %}
+{% spaceless %}
+
+{% set features = [
+	"ImmutableProperties", 
+	"Initializer", 
+	"NSCoding", 
+	"NSCopying", 
+	"Description", 
+	"Equality", 
+	"Hashing", 
+	"Builder", 
+	"LensSetters", 
+	"JSONCoding"
+] %}
+
+{% set address = {"name": "Address", "properties": [
+	{"name": "postalCode", "type": "NSNumber*"},
+	{"name": "streetAddress", "type": "NSString*"},
+	{"name": "number", "type": "NSInteger"}
+]} %}
+
+{% set person = {"name": "Person", "properties": [
+	{"name": "firstName", "type": "NSString*"},
+	{"name": "lastName", "type": "NSString*"},
+	{"name": "nickName", "type": "NSString*"},
+	{"name": "age", "type": "NSInteger"},
+	{"name": "address", "type": "Address*"}
+]} %}
+
+{{ objc.Model(address.name, address.properties, features) }}
+{{ objc.Model(person.name, person.properties, features, ["\"#{address.name}.h\""]) }}
+{{ swift.Model(address.name, address.properties, features) }}
+{{ swift.Model(person.name, person.properties, features) }}
+
+{% endspaceless %}

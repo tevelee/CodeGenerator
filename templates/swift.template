@@ -1,0 +1,82 @@
+{# ---------------------------------------------------------------------------------------------------------------- #}
+
+{% macro ModelFile(name, baseClass, protocols, imports, properties, content) %}
+{% endmacro %}
+
+{# ---------------------------------------------------------------------------------------------------------------- #}
+
+{% macro InitializerExtension(name) %}
+{% endmacro %}
+
+{# ---------------------------------------------------------------------------------------------------------------- #}
+
+{% macro NSCopyingExtension(name) %}
+{% endmacro %}
+
+{# ---------------------------------------------------------------------------------------------------------------- #}
+
+{% macro NSCodingExtension(name) %}
+{% endmacro %}
+
+{# ---------------------------------------------------------------------------------------------------------------- #}
+
+{% macro HashingExtension(name) %}
+{% endmacro %}
+
+{# ---------------------------------------------------------------------------------------------------------------- #}
+
+{% macro EqualityExtension(name) %}
+{% endmacro %}
+
+{# ---------------------------------------------------------------------------------------------------------------- #}
+
+{% macro DescriptionExtension(name, properties) %}
+{% endmacro %}
+
+{# ---------------------------------------------------------------------------------------------------------------- #}
+
+{% macro BuilderFile(name, properties) %}
+{% endmacro %}
+
+{# ---------------------------------------------------------------------------------------------------------------- #}
+
+{% macro Model(name, properties, features, imports = []) %}
+{% spaceless %}
+{% set protocols = [] %}
+{% set content = "" %}
+
+{% if "Initializer" in features %}
+    {% set content = content ~ _self.InitializerExtension(name, properties) %}
+{% endif %}
+
+{% if "Equality" in features %}
+    {% set content = content ~ _self.EqualityExtension(name, properties) %}
+{% endif %}
+
+{% if "Hashing" in features %}
+    {% set content = content ~ _self.HashingExtension(name, properties) %}
+{% endif %}
+
+{% if "Description" in features %}
+    {% set content = content ~ _self.DescriptionExtension(name, properties) %}
+{% endif %}
+
+{% if "NSCoding" in features %}
+    {% set protocols = protocols|merge(["NSCoding"]) %}
+    {% set content = content ~ _self.NSCodingExtension(name, properties) %}
+{% endif %}
+
+{% if "NSCopying" in features %}
+    {% set protocols = protocols|merge(["NSCopying"]) %}
+    {% set content = content ~ _self.NSCopyingExtension(name, properties) %}
+{% endif %}
+{% endspaceless %}
+
+{%- file "output/swift/#{name}.swift" = _self.ModelFile(name, features, protocols, ["Foundation"]|merge(imports), properties, content) -%}
+
+{% if "Builder" in features %}
+{% file "output/swift/#{name}Builder.swift" = _self.BuilderFile(name, properties) %}
+{% endif %}
+{% endmacro %}
+
+{# ---------------------------------------------------------------------------------------------------------------- #}
