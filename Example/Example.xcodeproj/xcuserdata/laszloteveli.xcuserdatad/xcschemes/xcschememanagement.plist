@@ -4,10 +4,15 @@
 <dict>
 	<key>SchemeUserState</key>
 	<dict>
-		<key>Example.xcscheme</key>
+		<key>ObjectiveC.xcscheme_^#shared#^_</key>
 		<dict>
 			<key>orderHint</key>
-			<integer>0</integer>
+			<integer>2</integer>
+		</dict>
+		<key>Swift.xcscheme_^#shared#^_</key>
+		<dict>
+			<key>orderHint</key>
+			<integer>1</integer>
 		</dict>
 	</dict>
 	<key>SuppressBuildableAutocreation</key>
@@ -18,6 +23,31 @@
 			<true/>
 		</dict>
 		<key>3A3C4D1A1DB55F1200C2329A</key>
+		<dict>
+			<key>primary</key>
+			<true/>
+		</dict>
+		<key>3A3C4DB01DB5778700C2329A</key>
+		<dict>
+			<key>primary</key>
+			<true/>
+		</dict>
+		<key>3A3C4DC81DB5778800C2329A</key>
+		<dict>
+			<key>primary</key>
+			<true/>
+		</dict>
+		<key>3A3C4DD91DB5779B00C2329A</key>
+		<dict>
+			<key>primary</key>
+			<true/>
+		</dict>
+		<key>3A3C4DF11DB5779C00C2329A</key>
+		<dict>
+			<key>primary</key>
+			<true/>
+		</dict>
+		<key>3A3C4E021DB577DE00C2329A</key>
 		<dict>
 			<key>primary</key>
 			<true/>

@@ -11,27 +11,42 @@
 	"Equality", 
 	"Hashing", 
 	"Builder", 
-	"LensSetters", 
+	"Lenses", 
 	"JSONCoding"
 ] %}
 
-{% set address = {"name": "Address", "properties": [
+{{ objc.Model("Address", [
 	{"name": "postalCode", "type": "NSNumber*"},
 	{"name": "streetAddress", "type": "NSString*"},
 	{"name": "number", "type": "NSInteger"}
-]} %}
+], features) }}
 
-{% set person = {"name": "Person", "properties": [
+{{- objc.Model("Person", [
 	{"name": "firstName", "type": "NSString*"},
 	{"name": "lastName", "type": "NSString*"},
 	{"name": "nickName", "type": "NSString*"},
 	{"name": "age", "type": "NSInteger"},
 	{"name": "address", "type": "Address*"}
-]} %}
+], features, ["\"Address.h\""]) }}
 
-{{ objc.Model(address.name, address.properties, features) }}
-{{ objc.Model(person.name, person.properties, features, ["\"#{address.name}.h\""]) }}
-{{ swift.Model(address.name, address.properties, features) }}
-{{ swift.Model(person.name, person.properties, features) }}
+{{- swift.Model("Address", [
+	{"name": "postalCode", "type": "Int"},
+	{"name": "streetAddress", "type": "String"},
+	{"name": "number", "type": "Int"}
+], features) }}
+
+{{- swift.Model("Person", [
+	{"name": "firstName", "type": "String"},
+	{"name": "lastName", "type": "String"},
+	{"name": "nickName", "type": "String"},
+	{"name": "age", "type": "Int"},
+	{"name": "address", "type": "Address", "custom": true}
+], features) }}
+
+{{- swift.Model("Record", [
+	{"name": "name", "type": "String"},
+	{"name": "creator", "type": "Person", "custom": true},
+	{"name": "date", "type": "Date"}
+], features) }}
 
 {% endspaceless %}

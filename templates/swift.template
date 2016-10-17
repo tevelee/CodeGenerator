@@ -1,53 +1,143 @@
 {# ---------------------------------------------------------------------------------------------------------------- #}
 
-{% macro ModelFile(name, baseClass, protocols, imports, properties, content) %}
+{% macro ModelFile(name, protocols, imports, properties, extensions) %}
+{% for importModule in imports %}
+import {{importModule}}
+{% endfor %}
+
+struct {{name}} {% for protocol in protocols %}{{protocol}}{% endfor %} {
+{% for property in properties %}
+    let {{property.name}}: {{property.type}}
+{% endfor %}
+
+    init({% for property in properties %}{{property.name}}: {{property.type}}{% if not loop.last %}, {% endif %}{% endfor %}) {
+{% for property in properties %}
+		self.{{property.name}} = {{property.name}}
+{% endfor %}
+    }
+}
+
+{{extensions}}
 {% endmacro %}
 
 {# ---------------------------------------------------------------------------------------------------------------- #}
 
-{% macro InitializerExtension(name) %}
+{% macro EqualityExtension(name, properties) %}
+
+func ==(lhs: {{name}}, rhs: {{name}}) -> Bool {
+    return {% for property in properties %}lhs.{{property.name}} == rhs.{{property.name}}{% if not loop.last %} && {% endif %}{% endfor %}
+}
+
+extension {{name}} : Equatable {
+}
 {% endmacro %}
 
 {# ---------------------------------------------------------------------------------------------------------------- #}
 
-{% macro NSCopyingExtension(name) %}
+{% macro HashableExtension(name, properties) %}
+
+extension {{name}} : Hashable {
+    public var hashValue: Int {
+        return {% for property in properties %}{{property.name}}.hashValue{% if not loop.last %} ^ {% endif %}{% endfor %}
+    }
+}
 {% endmacro %}
-
-{# ---------------------------------------------------------------------------------------------------------------- #}
-
-{% macro NSCodingExtension(name) %}
-{% endmacro %}
-
-{# ---------------------------------------------------------------------------------------------------------------- #}
-
-{% macro HashingExtension(name) %}
-{% endmacro %}
-
-{# ---------------------------------------------------------------------------------------------------------------- #}
-
-{% macro EqualityExtension(name) %}
-{% endmacro %}
-
 {# ---------------------------------------------------------------------------------------------------------------- #}
 
 {% macro DescriptionExtension(name, properties) %}
+
+extension {{name}} : CustomStringConvertible {
+    var description: String {
+        return "{{name}}({% for property in properties %}{{property.name}}: \({{property.name}}){% if not loop.last %} {% endif %}{% endfor %}"
+    }
+}
 {% endmacro %}
 
 {# ---------------------------------------------------------------------------------------------------------------- #}
 
-{% macro BuilderFile(name, properties) %}
+{% macro BuilderFile(name, properties, imports) %}
+{% for importModule in imports %}
+import {{importModule}}
+{% endfor %}
+
+struct {{name}}Builder {
+{% for property in properties %}
+	var {{property.name}}: {{property.type}}
+{% endfor %}
+    
+    func build () -> {{name}} {
+        return {{name}}({% for property in properties %}{{property.name}}: {{property.name}}{% if not loop.last %}, {% endif %}{% endfor %})
+    }
+    
+    //MARK: Initializers
+    
+    init(existing{{name|upperCapitalize}}: {{name}}) {
+{% for property in properties %}
+        {{property.name}} = existing{{name|upperCapitalize}}.{{property.name}}
+{% endfor %}
+    }
+    
+    //MARK: Property setters
+    
+{% for property in properties %}
+    mutating func with{{property.name|upperCapitalize}}(_ {{property.name}}: {{property.type}}) -> {{name}}Builder {
+        self.{{property.name}} = {{property.name}}
+        return self
+    }
+{% if not loop.last %}
+
+{% endif %}
+{% endfor %}
+}
+{% endmacro %}
+
+{# ---------------------------------------------------------------------------------------------------------------- #}
+
+{% macro LensesFile(name, properties, imports) %}
+{% for importModule in imports %}
+import {{importModule}}
+{% endfor %}
+
+extension {{name}} {
+    struct Lenses {
+{% for property in properties %}
+        static let {{property.name}}: Lens<{{name}}, {{property.type}}> = Lens(
+            get: { $0.{{property.name}} },
+            set: { ({{name|lowerCapitalize}}, {{property.name}}) in
+                var builder = {{name}}Builder(existing{{name}}: {{name|lowerCapitalize}})
+                return builder.with{{property.name|upperCapitalize}}({{property.name}}).build()
+            }
+        )
+{% endfor %}
+    }
+}
+
+struct BoundLensTo{{name}}<Whole>: BoundLensType {
+    typealias Part = {{name}}
+    let storage: BoundLensStorage<Whole, Part>
+    
+{% for property in properties %}
+    var {{property.name}}: BoundLens{% if property.custom %}To{{property.type|upperCapitalize}}<Whole>{% else %}<Whole, {{property.type}}>{% endif %} {
+        return BoundLens{% if property.custom %}To{{property.type|upperCapitalize}}<Whole>{% else %}<Whole, {{property.type}}>{% endif %}(parent: self, sublens: {{name}}.Lenses.{{property.name}})
+    }
+{% if not loop.last %}
+
+{% endif %}
+{% endfor %}
+}
+
+extension {{name}} {
+    var lens: BoundLensTo{{name}}<{{name}}> {
+        return BoundLensTo{{name}}<{{name}}>(instance: self, lens: createIdentityLens())
+    }
+}
 {% endmacro %}
 
 {# ---------------------------------------------------------------------------------------------------------------- #}
 
 {% macro Model(name, properties, features, imports = []) %}
 {% spaceless %}
-{% set protocols = [] %}
 {% set content = "" %}
-
-{% if "Initializer" in features %}
-    {% set content = content ~ _self.InitializerExtension(name, properties) %}
-{% endif %}
 
 {% if "Equality" in features %}
     {% set content = content ~ _self.EqualityExtension(name, properties) %}
@@ -60,22 +150,16 @@
 {% if "Description" in features %}
     {% set content = content ~ _self.DescriptionExtension(name, properties) %}
 {% endif %}
-
-{% if "NSCoding" in features %}
-    {% set protocols = protocols|merge(["NSCoding"]) %}
-    {% set content = content ~ _self.NSCodingExtension(name, properties) %}
-{% endif %}
-
-{% if "NSCopying" in features %}
-    {% set protocols = protocols|merge(["NSCopying"]) %}
-    {% set content = content ~ _self.NSCopyingExtension(name, properties) %}
-{% endif %}
 {% endspaceless %}
 
-{%- file "output/swift/#{name}.swift" = _self.ModelFile(name, features, protocols, ["Foundation"]|merge(imports), properties, content) -%}
+{%- file "output/swift/#{name}.swift" = _self.ModelFile(name, [], ["Foundation"]|merge(imports), properties, content) %}
 
-{% if "Builder" in features %}
-{% file "output/swift/#{name}Builder.swift" = _self.BuilderFile(name, properties) %}
+{%- if "Builder" in features %}
+{% file "output/swift/#{name}Builder.swift" = _self.BuilderFile(name, properties, ["Foundation"]) %}
+{% endif %}
+
+{%- if "Lenses" in features %}
+{% file "output/swift/#{name}Lenses.swift" = _self.LensesFile(name, properties, ["Foundation"]) %}
 {% endif %}
 {% endmacro %}
 
