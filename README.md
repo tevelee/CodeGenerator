@@ -3,6 +3,17 @@
 This repository contains a lightweight - yet powerful - approach to deal with language-independent code generation. 
 As I'm an iOS engineer, I primarily work with Objective-C and Swift code in my day-to-day work, so most of the examples are iOS related snippets.
 
+## Table of contents
+
+1. [Why templates?](#why-templates)
+2. [Motivation](#motivation)
+3. [About metaprogramming](#about-metaprogramming)
+4. [Usage](#usage)
+5. [Examples](#inputoutput-examples)
+6. [Future plans](#future-plans)
+7. [License](#license)
+
+
 ## Why templates?
 
 Why use a template engine when you have a bunch of professional generators like [Remodel](https://github.com/facebook/remodel) from Facebook or [json2swift](https://github.com/viteinfinite/json2swift) or [SwiftGen](https://github.com/AliSoftware/SwiftGen) or ... (the list is long).
@@ -41,9 +52,23 @@ Swift generics or protocol extensions are all somewhat extending your code witho
 
 ## Usage
 
-After you wrote your template, you should modify the last line of `index.php` accordingly: `echo $twig->render('models.template');`, unless you modified the name of the default `models.template` file.
+### Installation
 
-For the templaes I used the excellent [Twig](http://twig.sensiolabs.org/doc/templates.html) template engine. 
+To install the only dependency (Twig) for this project, I started using the populat PHP dependency-management tool, composer.
+
+You have mutiple options, the easiest one is to use the one pushed in the repo and simply run `php composer.phar install` while you're cd'd in the root of the repo.
+Or you're free to download it yourself from [here](https://getcomposer.org/doc/00-intro.md#downloading-the-composer-executable). 
+Or if you wish to leave the dependency mangement tool out, you can simply close twig into the `vendor` lib using `git clone https://github.com/twigphp/Twig.git ./vendor`.
+
+### Usage
+
+For the first try the easiest option is to use the example templates provided in the repo. To start the generation, simply run `php index.php` form the root of the cloned repo. 
+This will override the model files in `output/swift` and `output/objc`.
+
+If you wish to experiment more, please read further.
+After you created your own template, you should modify the last line of `index.php` accordingly: `echo $twig->render('models.template');`, unless you modified the name of the default `models.template` file.
+
+For the templates I used the excellent [Twig](http://twig.sensiolabs.org/doc/templates.html) template engine. 
 I was looking for something that is a language-independent templating system, and the closest I found was Twig. 
 It's largely optimized for web and be used in php environments, but turning off a couple of optimizations, like caching, made my life much easier. 
 
@@ -227,7 +252,7 @@ I found a couple of useful examples since and used them already for code/text ge
 This repository was brought to life by László Teveli. 
 The main engine behind the scenes is [Twig](http://twig.sensiolabs.org/doc/templates.html), created by SensioLabs.
 
-Any form of modification or redistribution is free and allowed by the author. 
+Any form of modification or redistribution is free and allowed by the author (MIT license). 
 If you happen to use it for something interesting, I'd appreciate an e-mail though ;-)
 The repo contains only an experiment to overcome the repetative tasks in my work. 
 I'm sharing it because someone else might also find it useful.
