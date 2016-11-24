@@ -14,6 +14,6 @@
 
 - (instancetype)withPostalCode:(NSNumber*)postalCode;
 - (instancetype)withStreetAddress:(NSString*)streetAddress;
-- (instancetype)withNumber:(NSInteger)number;
+- (instancetype)withNumber:(NumberEnum)number;
 
 @end

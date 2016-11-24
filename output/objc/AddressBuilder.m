@@ -4,8 +4,9 @@
 {
     NSNumber* _postalCode;
     NSString* _streetAddress;
-    NSInteger _number;
+    NumberEnum _number;
 }
+
 - (Address *)build
 {
     return [Address addressWithPostalCode:_postalCode streetAddress:_streetAddress number:_number];
@@ -41,11 +42,10 @@
     return self;
 }
 
-- (instancetype)withNumber:(NSInteger)number
+- (instancetype)withNumber:(NumberEnum)number
 {
     _number = number;
     return self;
 }
-
 
 @end

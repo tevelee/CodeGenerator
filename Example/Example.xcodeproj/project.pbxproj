@@ -70,6 +70,7 @@
 		3A3C4E321DB57DEA00C2329A /* Record.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Record.swift; sourceTree = "<group>"; };
 		3A3C4E331DB57DEA00C2329A /* RecordBuilder.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = RecordBuilder.swift; sourceTree = "<group>"; };
 		3A3C4E341DB57DEA00C2329A /* RecordLenses.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = RecordLenses.swift; sourceTree = "<group>"; };
+		3A5DFD351DE7872D004C5AB7 /* Enum.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Enum.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -176,6 +177,7 @@
 				3A3C4E291DB5782300C2329A /* Person.m */,
 				3A3C4E2A1DB5782300C2329A /* PersonBuilder.h */,
 				3A3C4E2B1DB5782300C2329A /* PersonBuilder.m */,
+				3A5DFD351DE7872D004C5AB7 /* Enum.h */,
 			);
 			name = objc;
 			path = ../../output/objc;
@@ -516,6 +518,7 @@
 				3A3C4DFB1DB5779C00C2329A /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 		3A3C4E121DB577DF00C2329A /* Build configuration list for PBXNativeTarget "SwiftExample" */ = {
 			isa = XCConfigurationList;
@@ -524,6 +527,7 @@
 				3A3C4E141DB577DF00C2329A /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 	};

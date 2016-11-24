@@ -1,11 +1,17 @@
 #import <Foundation/Foundation.h>
 #import "Address.h"
 
-FOUNDATION_EXPORT __unsafe_unretained NSString* const kPersonFirstNameKey;
-FOUNDATION_EXPORT __unsafe_unretained NSString* const kPersonLastNameKey;
-FOUNDATION_EXPORT __unsafe_unretained NSString* const kPersonNickNameKey;
-FOUNDATION_EXPORT __unsafe_unretained NSString* const kPersonAgeKey;
-FOUNDATION_EXPORT __unsafe_unretained NSString* const kPersonAddressKey;
+FOUNDATION_EXPORT __unsafe_unretained NSString* const kPersonFirstNameNSCodingKey;
+FOUNDATION_EXPORT __unsafe_unretained NSString* const kPersonLastNameNSCodingKey;
+FOUNDATION_EXPORT __unsafe_unretained NSString* const kPersonNickNameNSCodingKey;
+FOUNDATION_EXPORT __unsafe_unretained NSString* const kPersonAgeNSCodingKey;
+FOUNDATION_EXPORT __unsafe_unretained NSString* const kPersonAddressNSCodingKey;
+
+FOUNDATION_EXPORT __unsafe_unretained NSString* const kPersonFirstNameJSONCodingKey;
+FOUNDATION_EXPORT __unsafe_unretained NSString* const kPersonLastNameJSONCodingKey;
+FOUNDATION_EXPORT __unsafe_unretained NSString* const kPersonNickNameJSONCodingKey;
+FOUNDATION_EXPORT __unsafe_unretained NSString* const kPersonAgeJSONCodingKey;
+FOUNDATION_EXPORT __unsafe_unretained NSString* const kPersonAddressJSONCodingKey;
 
 @interface Person : NSObject <NSCoding, NSCopying>
 
@@ -18,5 +24,15 @@ FOUNDATION_EXPORT __unsafe_unretained NSString* const kPersonAddressKey;
 + (instancetype)personWithFirstName:(NSString*)firstName lastName:(NSString*)lastName nickName:(NSString*)nickName age:(NSInteger)age address:(Address*)address;
 
 - (BOOL)isEqualToPerson:(Person *)person;
+
+#pragma mark - JSON Encoding
+
+- (NSString*)jsonRepresentation;
+- (NSDictionary<NSString*, id>*)dictionaryRepresentation;
+
+#pragma mark - JSON Decoding
+
++ (instancetype)modelWithJSON:(NSString*)json;
++ (instancetype)modelWithDictionary:(NSDictionary<NSString*, id>*)dictionary;
 
 @end

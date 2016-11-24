@@ -8,6 +8,7 @@
     NSInteger _age;
     Address* _address;
 }
+
 - (Person *)build
 {
     return [Person personWithFirstName:_firstName lastName:_lastName nickName:_nickName age:_age address:_address];
@@ -62,6 +63,5 @@
     _address = [address copy];
     return self;
 }
-
 
 @end
