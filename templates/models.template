@@ -19,7 +19,9 @@
 {{ objc.Model("Address", [
 	{"name": "postalCode", "type": "NSNumber*", "json": "postal_code"},
 	{"name": "streetAddress", "type": "NSString*"},
-	{"name": "number", "type": "NumberEnum", "enum": true}
+	{"name": "number", "type": "NumberEnum", "enum": true},
+	{"name": "items", "type": "NSArray<NSString*>*"},
+	{"name": "map", "type": "NSDictionary<NSString*, NSNumber*>*"}
 ], features, ['"Enum.h"']) }}
 
 {{- objc.Model("Person", [
@@ -27,7 +29,8 @@
 	{"name": "lastName", "type": "NSString*"},
 	{"name": "nickName", "type": "NSString*"},
 	{"name": "age", "type": "NSInteger"},
-	{"name": "address", "type": "Address*", "custom": true}
+	{"name": "mainAddress", "type": "Address*", "model": true},
+	{"name": "addresses", "type": "NSArray<Address*>*", "model": true}
 ], features) }}
 
 {{- swift.Model("Address", [
@@ -41,12 +44,12 @@
 	{"name": "lastName", "type": "String"},
 	{"name": "nickName", "type": "String"},
 	{"name": "age", "type": "Int"},
-	{"name": "address", "type": "Address", "custom": true}
+	{"name": "address", "type": "Address", "model": true}
 ], features) }}
 
 {{- swift.Model("Record", [
 	{"name": "name", "type": "String"},
-	{"name": "creator", "type": "Person", "custom": true},
+	{"name": "creator", "type": "Person", "model": true},
 	{"name": "date", "type": "Date"}
 ], features) }}
 

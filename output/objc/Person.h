@@ -5,13 +5,15 @@ FOUNDATION_EXPORT __unsafe_unretained NSString* const kPersonFirstNameNSCodingKe
 FOUNDATION_EXPORT __unsafe_unretained NSString* const kPersonLastNameNSCodingKey;
 FOUNDATION_EXPORT __unsafe_unretained NSString* const kPersonNickNameNSCodingKey;
 FOUNDATION_EXPORT __unsafe_unretained NSString* const kPersonAgeNSCodingKey;
-FOUNDATION_EXPORT __unsafe_unretained NSString* const kPersonAddressNSCodingKey;
+FOUNDATION_EXPORT __unsafe_unretained NSString* const kPersonMainAddressNSCodingKey;
+FOUNDATION_EXPORT __unsafe_unretained NSString* const kPersonAddressesNSCodingKey;
 
 FOUNDATION_EXPORT __unsafe_unretained NSString* const kPersonFirstNameJSONCodingKey;
 FOUNDATION_EXPORT __unsafe_unretained NSString* const kPersonLastNameJSONCodingKey;
 FOUNDATION_EXPORT __unsafe_unretained NSString* const kPersonNickNameJSONCodingKey;
 FOUNDATION_EXPORT __unsafe_unretained NSString* const kPersonAgeJSONCodingKey;
-FOUNDATION_EXPORT __unsafe_unretained NSString* const kPersonAddressJSONCodingKey;
+FOUNDATION_EXPORT __unsafe_unretained NSString* const kPersonMainAddressJSONCodingKey;
+FOUNDATION_EXPORT __unsafe_unretained NSString* const kPersonAddressesJSONCodingKey;
 
 @interface Person : NSObject <NSCoding, NSCopying>
 
@@ -19,9 +21,10 @@ FOUNDATION_EXPORT __unsafe_unretained NSString* const kPersonAddressJSONCodingKe
 @property (nonatomic, copy, readonly) NSString* lastName;
 @property (nonatomic, copy, readonly) NSString* nickName;
 @property (nonatomic, assign, readonly) NSInteger age;
-@property (nonatomic, copy, readonly) Address* address;
+@property (nonatomic, copy, readonly) Address* mainAddress;
+@property (nonatomic, copy, readonly) NSArray<Address*>* addresses;
 
-+ (instancetype)personWithFirstName:(NSString*)firstName lastName:(NSString*)lastName nickName:(NSString*)nickName age:(NSInteger)age address:(Address*)address;
++ (instancetype)personWithFirstName:(NSString*)firstName lastName:(NSString*)lastName nickName:(NSString*)nickName age:(NSInteger)age mainAddress:(Address*)mainAddress addresses:(NSArray<Address*>*)addresses;
 
 - (BOOL)isEqualToPerson:(Person *)person;
 

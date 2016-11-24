@@ -15,6 +15,17 @@ $upperCapitalizeFilter= new Twig_SimpleFilter('upperCapitalize', function ($stri
 });
 $twig->addFilter($upperCapitalizeFilter);
 
+$regexReplace = new Twig_SimpleFilter('regexReplace', function ($value, $pattern, $replacement='', $limit=-1) {
+        if (!isset($value)) return null;
+        return preg_replace($pattern, $replacement, $value, $limit);
+});
+$twig->addFilter($regexReplace);
+
+$unique= new Twig_SimpleFilter('unique', function ($array) {
+    return array_unique($array);
+});
+$twig->addFilter($unique);
+
 class Twig_Node_File extends Twig_Node
 {
     public function __construct($name, $expression, $body, $line, $tag = null)

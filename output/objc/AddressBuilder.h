@@ -15,5 +15,7 @@
 - (instancetype)withPostalCode:(NSNumber*)postalCode;
 - (instancetype)withStreetAddress:(NSString*)streetAddress;
 - (instancetype)withNumber:(NumberEnum)number;
+- (instancetype)withItems:(NSArray<NSString*>*)items;
+- (instancetype)withMap:(NSDictionary<NSString*, NSNumber*>*)map;
 
 @end

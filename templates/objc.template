@@ -175,7 +175,7 @@
 {%- if property.type starts with "NSString" %}
  (self.{{property.name}}.length == 0 && {{name|lowerCapitalize}}.{{property.name}}.length == 0) || [self.{{property.name}} isEqualToString:{{name|lowerCapitalize}}.{{property.name}}];
 {% elseif property.type matches "/NS(Number|Date|Data|Array|Dictionary).*/" %}
- (self.{{property.name}} == nil && {{name|lowerCapitalize}}.{{property.name}} == nil) || [self.{{property.name}} isEqualTo{{property.type|replace({"NS": "", " *": "", "*": ""})}}:{{name|lowerCapitalize}}.{{property.name}}];
+ (self.{{property.name}} == nil && {{name|lowerCapitalize}}.{{property.name}} == nil) || [self.{{property.name}} isEqualTo{{property.type|regexReplace("/NS(.*)\\*/", "$1")|regexReplace("/<.*?>/", "")|trim}}:{{name|lowerCapitalize}}.{{property.name}}];
 {% elseif property.type ends with "*" %}
  (self.{{property.name}} == nil && {{name|lowerCapitalize}}.{{property.name}} == nil) || [self.{{property.name}} isEqual:{{name|lowerCapitalize}}.{{property.name}}];
 {% elseif property.type matches "/int|NSInteger|NSUInteger|double/" or property.enum %}
@@ -342,13 +342,32 @@
 {% for property in properties %}
 {% if property.type matches "/int|NSInteger|NSUInteger|double|float|CGFloat/" or property.enum %}
     [dictionary setObject:@(self.{{property.name}}) forKey:{{_self.PropertyJSONCodingKey(name, property)}}];
-{% elseif property.custom %}
-    if (self.{{property.name}}) {
-        [dictionary setObject:self.{{property.name}}.dictionaryRepresentation forKey:{{_self.PropertyJSONCodingKey(name, property)}}];
+{% elseif property.model %}
+{% if property.type matches "/Array/" %}
+    if (self.{{property.name}}.count > 0) {
+        NSMutableArray* {{property.name|lowerCapitalize}} = [NSMutableArray arrayWithCapacity:self.{{property.name}}.count];
+        for ({{property.type|regexReplace("/NSArray<(.*?)>\\*/", "$1")}} object in self.{{property.name}}) {
+            [{{property.name|lowerCapitalize}} addObject:object.dictionaryRepresentation];
+        }
+        [dictionary setObject:self.{{property.name}}.copy forKey:{{_self.PropertyJSONCodingKey(name, property)}}];
+    }
+{% elseif property.type matches "/Dictionary/" %}
+    if (self.{{property.name}}.count > 0) {
+        NSMutableDictionary* {{property.name|lowerCapitalize}} = [NSMutableDictionary dictionaryWithCapacity:self.{{property.name}}.count];
+        for ({{property.type|regexReplace("/NSDictionary<(.*?),(.*?)>\\*/", "$1")|trim}} key in self.{{property.name}}) {
+            {{property.type|regexReplace("/NSDictionary<(.*?),(.*?)>\\*/", "$2")|trim}} object = [self.{{property.name}} objectForKey:key];
+            [{{property.name|lowerCapitalize}} setObject:object.dictionaryRepresentation forKey:key];
+        }
+        [dictionary setObject:self.{{property.name}}.copy forKey:{{_self.PropertyJSONCodingKey(name, property)}}];
     }
 {% else %}
     if (self.{{property.name}}) {
-        [dictionary setObject:self.{{property.name}} forKey:{{_self.PropertyJSONCodingKey(name, property)}}];
+        [dictionary setObject:self.{{property.name}}.dictionaryRepresentation forKey:{{_self.PropertyJSONCodingKey(name, property)}}];
+    }
+{% endif %}
+{% else %}
+    if (self.{{property.name}}) {
+        [dictionary setObject:self.{{property.name}}.copy forKey:{{_self.PropertyJSONCodingKey(name, property)}}];
     }
 {% endif %}
 
@@ -399,8 +418,23 @@
     {{property.type}} {{property.name|lowerCapitalize}} = [[self numberFromObject:[dictionary objectForKey:{{_self.PropertyJSONCodingKey(name, property)}}]] doubleValue];
 {% elseif property.type matches "/float|CGFloat/" %}
     {{property.type}} {{property.name|lowerCapitalize}} = [[self numberFromObject:[dictionary objectForKey:{{_self.PropertyJSONCodingKey(name, property)}}]] floatValue];
-{% elseif property.custom %}
-    {{property.type}} {{property.name|lowerCapitalize}} = [{{property.type|replace({" *": "", "*": ""})}} modelWithDictionary:[dictionary objectForKey:{{_self.PropertyJSONCodingKey(name, property)}}]];
+{% elseif property.type matches "/Array/" and property.model %}
+    NSArray<NSDictionary*>* plain{{property.name|upperCapitalize}} = [dictionary objectForKey:{{_self.PropertyJSONCodingKey(name, property)}}];
+    {{property.type|regexReplace("/NSArray/", "NSMutableArray")}} {{property.name|lowerCapitalize}} = [NSMutableArray arrayWithCapacity:plain{{property.name|upperCapitalize}}.count];
+    for (NSDictionary* dictionary in plain{{property.name|upperCapitalize}}) {
+        {{property.type|regexReplace("/NSArray<(.*?)>\\*/", "$1")|trim}} object = [{{property.type|regexReplace("/NSArray<(.*?)>\\*/", "$1")|replace({"*": ""})|trim}} modelWithDictionary:dictionary];
+        [{{property.name|lowerCapitalize}} addObject:object];
+    }
+{% elseif property.type matches "/Dictionary/" and property.model %}
+    NSDictionary<{{property.type|regexReplace("/NSDictionary<(.*?),(.*?)>\\*/", "$1")|trim}}, NSDictionary*>* plain{{property.name|upperCapitalize}} = [dictionary objectForKey:{{_self.PropertyJSONCodingKey(name, property)}}];
+    {{property.type|regexReplace("/NSDictionary/", "NSMutableDictionary")}} {{property.name|lowerCapitalize}} = [NSMutableDictionary dictionaryWithCapacity:plain{{property.name|upperCapitalize}}.count];
+    for ({{property.type|regexReplace("/NSDictionary<(.*?),(.*?)>\\*/", "$1")|trim}} key in plain{{property.name|upperCapitalize}}) {
+        NSDictionary* plainObject = [plain{{property.name|upperCapitalize}} objectForKey:key];
+        {{property.type|regexReplace("/NSDictionary<(.*?),(.*?)>\\*/", "$2")|trim}} object = [{{property.type|regexReplace("/NSDictionary<(.*?),(.*?)>\\*/", "$2")|replace({"*": ""})|trim}} modelWithDictionary:plainObject];
+        [{{property.name|lowerCapitalize}} setObject:object forKey:key];
+    }
+{% elseif property.model %}
+    {{property.type}} {{property.name|lowerCapitalize}} = [{{property.type|replace({"*": ""})|trim}} modelWithDictionary:[dictionary objectForKey:{{_self.PropertyJSONCodingKey(name, property)}}]];
 {% else %}
     {{property.type}} {{property.name|lowerCapitalize}} = [dictionary objectForKey:{{_self.PropertyJSONCodingKey(name, property)}}];
 {% endif %}
@@ -445,8 +479,8 @@
 {% set implementation_globals = "" %}
 {% set implementation_content = "" %}
 {% for property in properties %}
-    {% if property.custom %}
-        {% set imports = imports|merge(['"' ~ property.type|replace({" *": "", "*": ""}) ~ '.h"']) %}
+    {% if property.model %}
+        {% set imports = imports|merge(['"' ~ property.type|regexReplace("/NSArray<(.*?)>/", "$1")|regexReplace("/NSDictionary<(.*?),(.*?)>/", "$2")|replace({"*": ""})|trim ~ '.h"']) %}
     {% endif %}
 {% endfor %}
 
@@ -498,7 +532,7 @@
 {% endif %}
 {% endspaceless %}
 
-{%- file "output/objc/#{name}.h" = _self.HeaderFile(name, "NSObject", features, header_protocols, ["<Foundation/Foundation.h>"]|merge(imports), properties, header_content, header_globals) -%}
+{%- file "output/objc/#{name}.h" = _self.HeaderFile(name, "NSObject", features, header_protocols, ["<Foundation/Foundation.h>"]|merge(imports|unique|sort), properties, header_content, header_globals) -%}
 {%- file "output/objc/#{name}.m" = _self.ImplementationFile(name, features, ["\"#{name}.h\""], properties, implementation_content, implementation_globals) -%}
 
 {% if "Builder" in features %}

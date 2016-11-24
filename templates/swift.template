@@ -117,8 +117,8 @@ struct BoundLensTo{{name}}<Whole>: BoundLensType {
     let storage: BoundLensStorage<Whole, Part>
     
 {% for property in properties %}
-    var {{property.name}}: BoundLens{% if property.custom %}To{{property.type|upperCapitalize}}<Whole>{% else %}<Whole, {{property.type}}>{% endif %} {
-        return BoundLens{% if property.custom %}To{{property.type|upperCapitalize}}<Whole>{% else %}<Whole, {{property.type}}>{% endif %}(parent: self, sublens: {{name}}.Lenses.{{property.name}})
+    var {{property.name}}: BoundLens{% if property.model %}To{{property.type|upperCapitalize}}<Whole>{% else %}<Whole, {{property.type}}>{% endif %} {
+        return BoundLens{% if property.model %}To{{property.type|upperCapitalize}}<Whole>{% else %}<Whole, {{property.type}}>{% endif %}(parent: self, sublens: {{name}}.Lenses.{{property.name}})
     }
 {% if not loop.last %}
 

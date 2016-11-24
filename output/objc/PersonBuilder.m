@@ -6,12 +6,13 @@
     NSString* _lastName;
     NSString* _nickName;
     NSInteger _age;
-    Address* _address;
+    Address* _mainAddress;
+    NSArray<Address*>* _addresses;
 }
 
 - (Person *)build
 {
-    return [Person personWithFirstName:_firstName lastName:_lastName nickName:_nickName age:_age address:_address];
+    return [Person personWithFirstName:_firstName lastName:_lastName nickName:_nickName age:_age mainAddress:_mainAddress addresses:_addresses];
 }
 
 #pragma mark - Initializers
@@ -28,7 +29,8 @@
     builder = [builder withLastName:existingPerson.lastName];
     builder = [builder withNickName:existingPerson.nickName];
     builder = [builder withAge:existingPerson.age];
-    builder = [builder withAddress:existingPerson.address];
+    builder = [builder withMainAddress:existingPerson.mainAddress];
+    builder = [builder withAddresses:existingPerson.addresses];
     return builder;
 }
 
@@ -58,9 +60,15 @@
     return self;
 }
 
-- (instancetype)withAddress:(Address*)address
+- (instancetype)withMainAddress:(Address*)mainAddress
 {
-    _address = [address copy];
+    _mainAddress = [mainAddress copy];
+    return self;
+}
+
+- (instancetype)withAddresses:(NSArray<Address*>*)addresses
+{
+    _addresses = [addresses copy];
     return self;
 }
 
