@@ -4,24 +4,18 @@
 FOUNDATION_EXPORT __unsafe_unretained NSString* const kAddressPostalCodeNSCodingKey;
 FOUNDATION_EXPORT __unsafe_unretained NSString* const kAddressStreetAddressNSCodingKey;
 FOUNDATION_EXPORT __unsafe_unretained NSString* const kAddressNumberNSCodingKey;
-FOUNDATION_EXPORT __unsafe_unretained NSString* const kAddressItemsNSCodingKey;
-FOUNDATION_EXPORT __unsafe_unretained NSString* const kAddressMapNSCodingKey;
 
 FOUNDATION_EXPORT __unsafe_unretained NSString* const kAddressPostalCodeJSONCodingKey;
 FOUNDATION_EXPORT __unsafe_unretained NSString* const kAddressStreetAddressJSONCodingKey;
 FOUNDATION_EXPORT __unsafe_unretained NSString* const kAddressNumberJSONCodingKey;
-FOUNDATION_EXPORT __unsafe_unretained NSString* const kAddressItemsJSONCodingKey;
-FOUNDATION_EXPORT __unsafe_unretained NSString* const kAddressMapJSONCodingKey;
 
 @interface Address : NSObject <NSCoding, NSCopying>
 
 @property (nonatomic, copy, readonly) NSNumber* postalCode;
 @property (nonatomic, copy, readonly) NSString* streetAddress;
 @property (nonatomic, assign, readonly) NumberEnum number;
-@property (nonatomic, copy, readonly) NSArray<NSString*>* items;
-@property (nonatomic, copy, readonly) NSDictionary<NSString*, NSNumber*>* map;
 
-+ (instancetype)addressWithPostalCode:(NSNumber*)postalCode streetAddress:(NSString*)streetAddress number:(NumberEnum)number items:(NSArray<NSString*>*)items map:(NSDictionary<NSString*, NSNumber*>*)map;
++ (instancetype)addressWithPostalCode:(NSNumber*)postalCode streetAddress:(NSString*)streetAddress number:(NumberEnum)number;
 
 - (BOOL)isEqualToAddress:(Address *)address;
 

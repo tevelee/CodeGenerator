@@ -5,13 +5,11 @@
     NSNumber* _postalCode;
     NSString* _streetAddress;
     NumberEnum _number;
-    NSArray<NSString*>* _items;
-    NSDictionary<NSString*, NSNumber*>* _map;
 }
 
 - (Address *)build
 {
-    return [Address addressWithPostalCode:_postalCode streetAddress:_streetAddress number:_number items:_items map:_map];
+    return [Address addressWithPostalCode:_postalCode streetAddress:_streetAddress number:_number];
 }
 
 #pragma mark - Initializers
@@ -27,8 +25,6 @@
     builder = [builder withPostalCode:existingAddress.postalCode];
     builder = [builder withStreetAddress:existingAddress.streetAddress];
     builder = [builder withNumber:existingAddress.number];
-    builder = [builder withItems:existingAddress.items];
-    builder = [builder withMap:existingAddress.map];
     return builder;
 }
 
@@ -49,18 +45,6 @@
 - (instancetype)withNumber:(NumberEnum)number
 {
     _number = number;
-    return self;
-}
-
-- (instancetype)withItems:(NSArray<NSString*>*)items
-{
-    _items = [items copy];
-    return self;
-}
-
-- (instancetype)withMap:(NSDictionary<NSString*, NSNumber*>*)map
-{
-    _map = [map copy];
     return self;
 }
 
