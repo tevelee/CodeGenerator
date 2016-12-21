@@ -16,6 +16,14 @@
     {%- if "ImmutableProperties" in features -%}
         {%- set attributes = attributes|merge(["readonly"]) -%}
     {%- endif -%}
+    {%- if property.type == "BOOL" -%}
+        {%- if property.isPrefixedGetter == true -%}
+            {%- set attributes = attributes|merge(["getter = is#{property.name|upperCapitalize}"]) -%}
+        {%- endif -%}
+    {%- endif -%}
+    {%- if property.getter is not null -%}
+        {%- set attributes = attributes|merge(["getter = #{property.getter}"]) -%}
+    {%- endif -%}
     @property ({{attributes|join(", ")}}) {{property.type}} {{property.name}};
 {% endfor %}
 
@@ -39,6 +47,10 @@
 {# ---------------------------------------------------------------------------------------------------------------- #}
 
 {% macro PropertyNSCodingKey(name, property) %}k{{name|upperCapitalize}}{{property.name|upperCapitalize}}NSCodingKey{% endmacro %}
+
+{# ---------------------------------------------------------------------------------------------------------------- #}
+
+{% macro PropertyGetter(property) %}{% if property.getter is not null %}{{property.getter}}{% elseif property.isPrefixedGetter %}is{{property.name|upperCapitalize}}{% else %}{{property.name}}{% endif %}{% endmacro %}
 
 {# ---------------------------------------------------------------------------------------------------------------- #}
 
@@ -66,11 +78,11 @@
 {
 {% for property in properties %}
 {% if property.type ends with "*" %}
-    [encoder encodeObject:self.{{property.name}} forKey:{{_self.PropertyNSCodingKey(name, property)}}];
+    [encoder encodeObject:self.{{_self.PropertyGetter(property)}} forKey:{{_self.PropertyNSCodingKey(name, property)}}];
 {% elseif property.type matches "/NSInteger|NSUInteger/" %}
-    [encoder encodeInteger:self.{{property.name}} forKey:{{_self.PropertyNSCodingKey(name, property)}}];
+    [encoder encodeInteger:self.{{_self.PropertyGetter(property)}} forKey:{{_self.PropertyNSCodingKey(name, property)}}];
 {% elseif property.type == "int" or property.enum %}
-    [encoder encodeInt:self.{{property.name}} forKey:{{_self.PropertyNSCodingKey(name, property)}}];
+    [encoder encodeInt:self.{{_self.PropertyGetter(property)}} forKey:{{_self.PropertyNSCodingKey(name, property)}}];
 {% endif %}
 {% endfor %}
 }
@@ -104,7 +116,25 @@
 
 - (id)copyWithZone:(nullable NSZone *)zone
 {
-    return [[self.class allocWithZone:zone] init{% for property in properties %}{% if loop.first %}With{{property.name|upperCapitalize}}{% else %} {{property.name|lowerCapitalize}}{% endif %}:self.{{property.name}}{% if property.type ends with "*" %}.copy{% endif %}{% endfor %}];
+    {{ name }}* copy = [[self.class allocWithZone:zone] init];
+
+{% for property in properties %}
+    copy.{{property.name}} = self.{{_self.PropertyGetter(property)}}{% if property.type ends with "*" %}.copy{% endif %};
+{% endfor %}
+
+    return copy;
+}
+{% endmacro %}
+
+{# ---------------------------------------------------------------------------------------------------------------- #}
+
+{% macro NSCopyingWithInitializer(name, properties) %}
+#pragma mark -
+#pragma mark NSCopying
+
+- (id)copyWithZone:(nullable NSZone *)zone
+{
+    return [[self.class allocWithZone:zone] init{% for property in properties %}{% if loop.first %}With{{property.name|upperCapitalize}}{% else %} {{property.name|lowerCapitalize}}{% endif %}:self.{{_self.PropertyGetter(property)}}{% if property.type ends with "*" %}.copy{% endif %}{% endfor %}];
 }
 {% endmacro %}
 
@@ -173,14 +203,17 @@
 {% for property in properties %}
     BOOL haveEqual{{property.name|upperCapitalize}}Properties = 
 {%- if property.type starts with "NSString" %}
- (self.{{property.name}}.length == 0 && {{name|lowerCapitalize}}.{{property.name}}.length == 0) || [self.{{property.name}} isEqualToString:{{name|lowerCapitalize}}.{{property.name}}];
+ (self.{{_self.PropertyGetter(property)}}.length == 0 && {{name|lowerCapitalize}}.{{_self.PropertyGetter(property)}}.length == 0) || [self.{{_self.PropertyGetter(property)}} isEqualToString:{{name|lowerCapitalize}}.{{_self.PropertyGetter(property)}}];
 {% elseif property.type matches "/NS(Number|Date|Data|Array|Dictionary).*/" %}
- (self.{{property.name}} == nil && {{name|lowerCapitalize}}.{{property.name}} == nil) || [self.{{property.name}} isEqualTo{{property.type|regexReplace("/NS(.*)\\*/", "$1")|regexReplace("/<.*?>/", "")|trim}}:{{name|lowerCapitalize}}.{{property.name}}];
+ (self.{{_self.PropertyGetter(property)}} == nil && {{name|lowerCapitalize}}.{{_self.PropertyGetter(property)}} == nil) || [self.{{_self.PropertyGetter(property)}} isEqualTo{{property.type|regexReplace("/NS(.*)\\*/", "$1")|regexReplace("/<.*?>/", "")|trim}}:{{name|lowerCapitalize}}.{{_self.PropertyGetter(property)}}];
 {% elseif property.type ends with "*" %}
- (self.{{property.name}} == nil && {{name|lowerCapitalize}}.{{property.name}} == nil) || [self.{{property.name}} isEqual:{{name|lowerCapitalize}}.{{property.name}}];
+ (self.{{_self.PropertyGetter(property)}} == nil && {{name|lowerCapitalize}}.{{_self.PropertyGetter(property)}} == nil) || [self.{{_self.PropertyGetter(property)}} isEqual:{{name|lowerCapitalize}}.{{_self.PropertyGetter(property)}}];
 {% elseif property.type matches "/int|NSInteger|NSUInteger|double/" or property.enum %}
- self.{{property.name}} == {{name|lowerCapitalize}}.{{property.name}};
+ self.{{_self.PropertyGetter(property)}} == {{name|lowerCapitalize}}.{{_self.PropertyGetter(property)}};
+{% elseif property.type matches "/CG(Size|Point|Rect).*/" %}
+ {{property.type}}EqualTo{{property.type|regexReplace("/CG(.*)/", "$1")|upperCapitalize}}({{_self.PropertyGetter(property)}}, {{name|lowerCapitalize}}.{{_self.PropertyGetter(property)}});
 {% else %}
+ self.{{_self.PropertyGetter(property)}} == {{name|lowerCapitalize}}.{{_self.PropertyGetter(property)}};
 {% endif %}
     if (haveEqual{{property.name|upperCapitalize}}Properties == NO) {
         return NO;
@@ -199,7 +232,7 @@
 
 - (NSUInteger)hash
 {
-    return super.hash{% for property in properties %} ^ [{% if property.type ends with "*" %}self.{{property.name}}{% elseif property.type matches "/int|NSInteger|NSUInteger|double|float|CGFloat/" or property.enum %}@(self.{{property.name}}){% endif %} hash]{% endfor %};
+    return super.hash{% for property in properties %} ^ [{% if property.type ends with "*" %}self.{{_self.PropertyGetter(property)}}{% elseif property.type matches "/int|NSInteger|NSUInteger|double|float|CGFloat|BOOL/" or property.enum %}@(self.{{_self.PropertyGetter(property)}}){% endif %} hash]{% endfor %};
 }
 {% endmacro %}
 
@@ -213,7 +246,7 @@
 - (NSString *)description
 {
     NSString* existing = super.description;
-    return [[existing substringToIndex:existing.length - 1] stringByAppendingFormat:@"{% for property in properties %}{% if not loop.first %}, \n\t{% endif %}{{property.name}} = %{{ property.type ends with "*" ? "@" : "ld"}}{% endfor %}>", {% for property in properties %}self.{{property.name}}{% if not loop.last %}, {% endif %}{% endfor %}];
+    return [[existing substringToIndex:existing.length - 1] stringByAppendingFormat:@"{% for property in properties %}{% if not loop.first %}, \n\t{% endif %}{{property.name}} = %{{ property.type ends with "*" ? "@" : "ld"}}{% endfor %}>", {% for property in properties %}{% if property.type == "BOOL" %}(NSInteger){% endif %}self.{{_self.PropertyGetter(property)}}{% if not loop.last %}, {% endif %}{% endfor %}];
 }
 {% endmacro %}
 
@@ -269,7 +302,7 @@
 {
     {{name}}Builder* builder = [self builder];
 {% for property in properties %}
-    builder = [builder with{{property.name|upperCapitalize}}:existing{{name|upperCapitalize}}.{{property.name}}];
+    builder = [builder with{{property.name|upperCapitalize}}:existing{{name|upperCapitalize}}.{{_self.PropertyGetter(property)}}];
 {% endfor %}
     return builder;
 }
@@ -340,34 +373,34 @@
     NSMutableDictionary* dictionary = [NSMutableDictionary dictionaryWithCapacity:{{properties|length}}];
     
 {% for property in properties %}
-{% if property.type matches "/int|NSInteger|NSUInteger|double|float|CGFloat/" or property.enum %}
-    [dictionary setObject:@(self.{{property.name}}) forKey:{{_self.PropertyJSONCodingKey(name, property)}}];
+{% if property.type matches "/int|NSInteger|NSUInteger|double|float|CGFloat|BOOL/" or property.enum %}
+    [dictionary setObject:@(self.{{_self.PropertyGetter(property)}}) forKey:{{_self.PropertyJSONCodingKey(name, property)}}];
 {% elseif property.model %}
 {% if property.type matches "/Array/" %}
-    if (self.{{property.name}}.count > 0) {
-        NSMutableArray* {{property.name|lowerCapitalize}} = [NSMutableArray arrayWithCapacity:self.{{property.name}}.count];
-        for ({{property.type|regexReplace("/NSArray<(.*?)>\\*/", "$1")}} object in self.{{property.name}}) {
+    if (self.{{_self.PropertyGetter(property)}}.count > 0) {
+        NSMutableArray* {{property.name|lowerCapitalize}} = [NSMutableArray arrayWithCapacity:self.{{_self.PropertyGetter(property)}}.count];
+        for ({{property.type|regexReplace("/NSArray<(.*?)>\\*/", "$1")}} object in self.{{_self.PropertyGetter(property)}}) {
             [{{property.name|lowerCapitalize}} addObject:object.dictionaryRepresentation];
         }
-        [dictionary setObject:self.{{property.name}}.copy forKey:{{_self.PropertyJSONCodingKey(name, property)}}];
+        [dictionary setObject:self.{{_self.PropertyGetter(property)}}.copy forKey:{{_self.PropertyJSONCodingKey(name, property)}}];
     }
 {% elseif property.type matches "/Dictionary/" %}
-    if (self.{{property.name}}.count > 0) {
-        NSMutableDictionary* {{property.name|lowerCapitalize}} = [NSMutableDictionary dictionaryWithCapacity:self.{{property.name}}.count];
-        for ({{property.type|regexReplace("/NSDictionary<(.*?),(.*?)>\\*/", "$1")|trim}} key in self.{{property.name}}) {
-            {{property.type|regexReplace("/NSDictionary<(.*?),(.*?)>\\*/", "$2")|trim}} object = [self.{{property.name}} objectForKey:key];
+    if (self.{{_self.PropertyGetter(property)}}.count > 0) {
+        NSMutableDictionary* {{property.name|lowerCapitalize}} = [NSMutableDictionary dictionaryWithCapacity:self.{{_self.PropertyGetter(property)}}.count];
+        for ({{property.type|regexReplace("/NSDictionary<(.*?),(.*?)>\\*/", "$1")|trim}} key in self.{{_self.PropertyGetter(property)}}) {
+            {{property.type|regexReplace("/NSDictionary<(.*?),(.*?)>\\*/", "$2")|trim}} object = [self.{{_self.PropertyGetter(property)}} objectForKey:key];
             [{{property.name|lowerCapitalize}} setObject:object.dictionaryRepresentation forKey:key];
         }
-        [dictionary setObject:self.{{property.name}}.copy forKey:{{_self.PropertyJSONCodingKey(name, property)}}];
+        [dictionary setObject:self.{{_self.PropertyGetter(property)}}.copy forKey:{{_self.PropertyJSONCodingKey(name, property)}}];
     }
 {% else %}
-    if (self.{{property.name}}) {
-        [dictionary setObject:self.{{property.name}}.dictionaryRepresentation forKey:{{_self.PropertyJSONCodingKey(name, property)}}];
+    if (self.{{_self.PropertyGetter(property)}}) {
+        [dictionary setObject:self.{{_self.PropertyGetter(property)}}.dictionaryRepresentation forKey:{{_self.PropertyJSONCodingKey(name, property)}}];
     }
 {% endif %}
 {% else %}
-    if (self.{{property.name}}) {
-        [dictionary setObject:self.{{property.name}}.copy forKey:{{_self.PropertyJSONCodingKey(name, property)}}];
+    if (self.{{_self.PropertyGetter(property)}}) {
+        [dictionary setObject:self.{{_self.PropertyGetter(property)}}.copy forKey:{{_self.PropertyJSONCodingKey(name, property)}}];
     }
 {% endif %}
 
@@ -513,7 +546,11 @@
 
 {% if "NSCopying" in features %}
     {% set header_protocols = header_protocols|merge(["NSCopying"]) %}
-    {% set implementation_content = implementation_content ~ "\n" ~ _self.NSCopying(name, properties) %}
+    {% if "Initializer" in features %}
+        {% set implementation_content = implementation_content ~ "\n" ~ _self.NSCopyingWithInitializer(name, properties) %}
+    {% else %}
+        {% set implementation_content = implementation_content ~ "\n" ~ _self.NSCopying(name, properties) %}
+    {% endif %}
 {% endif %}
 
 {% if "JSONEncoding" in features or "JSONDecoding" in features %}

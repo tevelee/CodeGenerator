@@ -4,28 +4,31 @@ __unsafe_unretained NSString* const kPersonFirstNameNSCodingKey = @"PERSON_FIRST
 __unsafe_unretained NSString* const kPersonLastNameNSCodingKey = @"PERSON_LASTNAME";
 __unsafe_unretained NSString* const kPersonNickNameNSCodingKey = @"PERSON_NICKNAME";
 __unsafe_unretained NSString* const kPersonAgeNSCodingKey = @"PERSON_AGE";
+__unsafe_unretained NSString* const kPersonCanOrderNSCodingKey = @"PERSON_CANORDER";
 __unsafe_unretained NSString* const kPersonAddressesNSCodingKey = @"PERSON_ADDRESSES";
 
 __unsafe_unretained NSString* const kPersonFirstNameJSONCodingKey = @"firstName";
 __unsafe_unretained NSString* const kPersonLastNameJSONCodingKey = @"lastName";
 __unsafe_unretained NSString* const kPersonNickNameJSONCodingKey = @"nickName";
 __unsafe_unretained NSString* const kPersonAgeJSONCodingKey = @"age";
+__unsafe_unretained NSString* const kPersonCanOrderJSONCodingKey = @"canOrder";
 __unsafe_unretained NSString* const kPersonAddressesJSONCodingKey = @"addresses";
 
 @implementation Person
 
-+ (instancetype)personWithFirstName:(NSString*)firstName lastName:(NSString*)lastName nickName:(NSString*)nickName age:(NSInteger)age addresses:(NSArray<Address*>*)addresses
++ (instancetype)personWithFirstName:(NSString*)firstName lastName:(NSString*)lastName nickName:(NSString*)nickName age:(NSInteger)age canOrder:(BOOL)canOrder addresses:(NSArray<Address*>*)addresses
 {
-    return [[self alloc] initWithFirstName:firstName lastName:lastName nickName:nickName age:age addresses:addresses];
+    return [[self alloc] initWithFirstName:firstName lastName:lastName nickName:nickName age:age canOrder:canOrder addresses:addresses];
 }
 
-- (instancetype)initWithFirstName:(NSString*)firstName lastName:(NSString*)lastName nickName:(NSString*)nickName age:(NSInteger)age addresses:(NSArray<Address*>*)addresses{
+- (instancetype)initWithFirstName:(NSString*)firstName lastName:(NSString*)lastName nickName:(NSString*)nickName age:(NSInteger)age canOrder:(BOOL)canOrder addresses:(NSArray<Address*>*)addresses{
     self = [super init];
     if (self) { 
         _firstName = [firstName copy];
         _lastName = [lastName copy];
         _nickName = [nickName copy];
         _age = age;
+        _canOrder = canOrder;
         _addresses = [addresses copy];
     }
     return self;
@@ -73,6 +76,11 @@ __unsafe_unretained NSString* const kPersonAddressesJSONCodingKey = @"addresses"
         return NO;
     }
 
+    BOOL haveEqualCanOrderProperties = self.canOrder == person.canOrder;
+    if (haveEqualCanOrderProperties == NO) {
+        return NO;
+    }
+
     BOOL haveEqualAddressesProperties = (self.addresses == nil && person.addresses == nil) || [self.addresses isEqualToArray:person.addresses];
     if (haveEqualAddressesProperties == NO) {
         return NO;
@@ -86,7 +94,7 @@ __unsafe_unretained NSString* const kPersonAddressesJSONCodingKey = @"addresses"
 
 - (NSUInteger)hash
 {
-    return super.hash ^ [self.firstName hash] ^ [self.lastName hash] ^ [self.nickName hash] ^ [@(self.age) hash] ^ [self.addresses hash];
+    return super.hash ^ [self.firstName hash] ^ [self.lastName hash] ^ [self.nickName hash] ^ [@(self.age) hash] ^ [@(self.canOrder) hash] ^ [self.addresses hash];
 }
 
 
@@ -96,7 +104,7 @@ __unsafe_unretained NSString* const kPersonAddressesJSONCodingKey = @"addresses"
 - (NSString *)description
 {
     NSString* existing = super.description;
-    return [[existing substringToIndex:existing.length - 1] stringByAppendingFormat:@"firstName = %@, \n\tlastName = %@, \n\tnickName = %@, \n\tage = %ld, \n\taddresses = %@>", self.firstName, self.lastName, self.nickName, self.age, self.addresses];
+    return [[existing substringToIndex:existing.length - 1] stringByAppendingFormat:@"firstName = %@, \n\tlastName = %@, \n\tnickName = %@, \n\tage = %ld, \n\tcanOrder = %ld, \n\taddresses = %@>", self.firstName, self.lastName, self.nickName, self.age, (NSInteger)self.canOrder, self.addresses];
 }
 
 #pragma mark - 
@@ -132,7 +140,7 @@ __unsafe_unretained NSString* const kPersonAddressesJSONCodingKey = @"addresses"
 
 - (id)copyWithZone:(nullable NSZone *)zone
 {
-    return [[self.class allocWithZone:zone] initWithFirstName:self.firstName.copy lastName:self.lastName.copy nickName:self.nickName.copy age:self.age addresses:self.addresses.copy];
+    return [[self.class allocWithZone:zone] initWithFirstName:self.firstName.copy lastName:self.lastName.copy nickName:self.nickName.copy age:self.age canOrder:self.canOrder addresses:self.addresses.copy];
 }
 
 #pragma mark -
@@ -151,7 +159,7 @@ __unsafe_unretained NSString* const kPersonAddressesJSONCodingKey = @"addresses"
 
 - (NSDictionary<NSString*, id>*)dictionaryRepresentation
 {
-    NSMutableDictionary* dictionary = [NSMutableDictionary dictionaryWithCapacity:5];
+    NSMutableDictionary* dictionary = [NSMutableDictionary dictionaryWithCapacity:6];
     
     if (self.firstName) {
         [dictionary setObject:self.firstName.copy forKey:kPersonFirstNameJSONCodingKey];
@@ -166,6 +174,8 @@ __unsafe_unretained NSString* const kPersonAddressesJSONCodingKey = @"addresses"
     }
 
     [dictionary setObject:@(self.age) forKey:kPersonAgeJSONCodingKey];
+
+    [dictionary setObject:@(self.canOrder) forKey:kPersonCanOrderJSONCodingKey];
 
     if (self.addresses.count > 0) {
         NSMutableArray* addresses = [NSMutableArray arrayWithCapacity:self.addresses.count];
@@ -199,13 +209,14 @@ __unsafe_unretained NSString* const kPersonAddressesJSONCodingKey = @"addresses"
     NSString* lastName = [self stringFromObject:[dictionary objectForKey:kPersonLastNameJSONCodingKey]];
     NSString* nickName = [self stringFromObject:[dictionary objectForKey:kPersonNickNameJSONCodingKey]];
     NSInteger age = [[self numberFromObject:[dictionary objectForKey:kPersonAgeJSONCodingKey]] integerValue];
+    BOOL canOrder = [dictionary objectForKey:kPersonCanOrderJSONCodingKey];
     NSArray<NSDictionary*>* plainAddresses = [dictionary objectForKey:kPersonAddressesJSONCodingKey];
     NSMutableArray<Address*>* addresses = [NSMutableArray arrayWithCapacity:plainAddresses.count];
     for (NSDictionary* dictionary in plainAddresses) {
         Address* object = [Address modelWithDictionary:dictionary];
         [addresses addObject:object];
     }
-    return [self personWithFirstName:firstName lastName:lastName nickName:nickName age:age addresses:addresses];
+    return [self personWithFirstName:firstName lastName:lastName nickName:nickName age:age canOrder:canOrder addresses:addresses];
 }
 
 + (NSNumber*)numberFromObject:(id)object

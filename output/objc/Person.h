@@ -5,12 +5,14 @@ FOUNDATION_EXPORT __unsafe_unretained NSString* const kPersonFirstNameNSCodingKe
 FOUNDATION_EXPORT __unsafe_unretained NSString* const kPersonLastNameNSCodingKey;
 FOUNDATION_EXPORT __unsafe_unretained NSString* const kPersonNickNameNSCodingKey;
 FOUNDATION_EXPORT __unsafe_unretained NSString* const kPersonAgeNSCodingKey;
+FOUNDATION_EXPORT __unsafe_unretained NSString* const kPersonCanOrderNSCodingKey;
 FOUNDATION_EXPORT __unsafe_unretained NSString* const kPersonAddressesNSCodingKey;
 
 FOUNDATION_EXPORT __unsafe_unretained NSString* const kPersonFirstNameJSONCodingKey;
 FOUNDATION_EXPORT __unsafe_unretained NSString* const kPersonLastNameJSONCodingKey;
 FOUNDATION_EXPORT __unsafe_unretained NSString* const kPersonNickNameJSONCodingKey;
 FOUNDATION_EXPORT __unsafe_unretained NSString* const kPersonAgeJSONCodingKey;
+FOUNDATION_EXPORT __unsafe_unretained NSString* const kPersonCanOrderJSONCodingKey;
 FOUNDATION_EXPORT __unsafe_unretained NSString* const kPersonAddressesJSONCodingKey;
 
 @interface Person : NSObject <NSCoding, NSCopying>
@@ -19,9 +21,10 @@ FOUNDATION_EXPORT __unsafe_unretained NSString* const kPersonAddressesJSONCoding
 @property (nonatomic, copy, readonly) NSString* lastName;
 @property (nonatomic, copy, readonly) NSString* nickName;
 @property (nonatomic, assign, readonly) NSInteger age;
+@property (nonatomic, assign, readonly, getter = canOrder) BOOL canOrder;
 @property (nonatomic, copy, readonly) NSArray<Address*>* addresses;
 
-+ (instancetype)personWithFirstName:(NSString*)firstName lastName:(NSString*)lastName nickName:(NSString*)nickName age:(NSInteger)age addresses:(NSArray<Address*>*)addresses;
++ (instancetype)personWithFirstName:(NSString*)firstName lastName:(NSString*)lastName nickName:(NSString*)nickName age:(NSInteger)age canOrder:(BOOL)canOrder addresses:(NSArray<Address*>*)addresses;
 
 - (BOOL)isEqualToPerson:(Person *)person;
 

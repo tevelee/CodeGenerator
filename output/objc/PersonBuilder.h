@@ -16,6 +16,7 @@
 - (instancetype)withLastName:(NSString*)lastName;
 - (instancetype)withNickName:(NSString*)nickName;
 - (instancetype)withAge:(NSInteger)age;
+- (instancetype)withCanOrder:(BOOL)canOrder;
 - (instancetype)withAddresses:(NSArray<Address*>*)addresses;
 
 @end

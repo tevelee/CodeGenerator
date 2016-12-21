@@ -4,18 +4,21 @@
 FOUNDATION_EXPORT __unsafe_unretained NSString* const kAddressPostalCodeNSCodingKey;
 FOUNDATION_EXPORT __unsafe_unretained NSString* const kAddressStreetAddressNSCodingKey;
 FOUNDATION_EXPORT __unsafe_unretained NSString* const kAddressNumberNSCodingKey;
+FOUNDATION_EXPORT __unsafe_unretained NSString* const kAddressValidNSCodingKey;
 
 FOUNDATION_EXPORT __unsafe_unretained NSString* const kAddressPostalCodeJSONCodingKey;
 FOUNDATION_EXPORT __unsafe_unretained NSString* const kAddressStreetAddressJSONCodingKey;
 FOUNDATION_EXPORT __unsafe_unretained NSString* const kAddressNumberJSONCodingKey;
+FOUNDATION_EXPORT __unsafe_unretained NSString* const kAddressValidJSONCodingKey;
 
 @interface Address : NSObject <NSCoding, NSCopying>
 
 @property (nonatomic, copy, readonly) NSNumber* postalCode;
 @property (nonatomic, copy, readonly) NSString* streetAddress;
 @property (nonatomic, assign, readonly) NumberEnum number;
+@property (nonatomic, assign, readonly, getter = isValid) BOOL valid;
 
-+ (instancetype)addressWithPostalCode:(NSNumber*)postalCode streetAddress:(NSString*)streetAddress number:(NumberEnum)number;
++ (instancetype)addressWithPostalCode:(NSNumber*)postalCode streetAddress:(NSString*)streetAddress number:(NumberEnum)number valid:(BOOL)valid;
 
 - (BOOL)isEqualToAddress:(Address *)address;
 

@@ -19,7 +19,8 @@
 {{ objc.Model("Address", [
 	{"name": "postalCode", "type": "NSNumber*", "json": "postal_code"},
 	{"name": "streetAddress", "type": "NSString*"},
-	{"name": "number", "type": "NumberEnum", "enum": true}
+	{"name": "number", "type": "NumberEnum", "enum": true},
+	{"name": "valid", "type": "BOOL", "isPrefixedGetter": true}
 ], features, ['"Enum.h"']) }}
 
 {{- objc.Model("Person", [
@@ -27,6 +28,7 @@
 	{"name": "lastName", "type": "NSString*"},
 	{"name": "nickName", "type": "NSString*"},
 	{"name": "age", "type": "NSInteger"},
+	{"name": "canOrder", "type": "BOOL", "getter": "canOrder"},
 	{"name": "addresses", "type": "NSArray<Address*>*", "model": true}
 ], features) }}
 
