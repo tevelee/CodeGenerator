@@ -2,7 +2,7 @@
 
 require_once 'vendor/autoload.php';
 
-$loader = new Twig_Loader_Filesystem('templates');
+$loader = new Twig_Loader_Filesystem(getcwd());
 $twig = new Twig_Environment($loader, array("autoescape" => false));
 
 $lowerCapitalizeFilter = new Twig_SimpleFilter('lowerCapitalize', function ($string) {
@@ -47,7 +47,7 @@ class Twig_Node_File extends Twig_Node
                 ->write(', "w") or die("Unable to open file!");')
                 ->write('fwrite($file, $content);')
                 ->write('fclose($file);')
-                ->write('echo("Created ".')
+                ->write('echo("- Generated ".')
                 ->subcompile($this->getNode('name'))
                 ->write('."\n");');
         } else {
@@ -60,7 +60,7 @@ class Twig_Node_File extends Twig_Node
     			->subcompile($this->getNode('expression'))
     			->write(');')
     			->write('fclose($file);')
-    			->write('echo("Created ".')
+    			->write('echo("- Generated ".')
     			->subcompile($this->getNode('name'))
     			->write('."\n");');
         }
@@ -97,8 +97,26 @@ class Twig_TokenParser_File extends Twig_TokenParser
         return 'file';
     }
 }
+   
+function files($pattern, $flags = 0)
+{
+    $files = glob($pattern, $flags);
+    
+    foreach (glob(dirname($pattern).'/*', GLOB_ONLYDIR|GLOB_NOSORT) as $dir)
+    {
+        $files = array_merge($files, files($dir.'/'.basename($pattern), $flags));
+    }
+    
+    return $files;
+}
 
 $twig->addTokenParser(new Twig_TokenParser_File());
-echo $twig->render('models.template');
+
+$files = files('*.{model}', GLOB_BRACE);
+foreach($files as $file) {
+    $twig->addGlobal('path', dirname($file));
+    $output = $twig->render($file);
+    echo "Parsing $file:".PHP_EOL.$output.PHP_EOL.PHP_EOL;
+}
 
 ?>

@@ -1,0 +1,9 @@
+{% import "templates/objc.template" as objc %}
+{{ objc.Model("Person", [
+	{"name": "firstName", "type": "NSString*"},
+	{"name": "lastName", "type": "NSString*"},
+	{"name": "nickName", "type": "NSString*"},
+	{"name": "age", "type": "NSInteger"},
+	{"name": "canOrder", "type": "BOOL", "getter": "canOrder"},
+	{"name": "addresses", "type": "NSArray<Address*>*", "model": true}
+], ["ImmutableProperties", "Initializer", "NSCoding", "NSCopying", "Description", "Equality", "Hashing", "Builder", "JSONEncoding", "JSONDecoding"]) }}

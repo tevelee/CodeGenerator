@@ -1,0 +1,8 @@
+{% import "templates/swift.template" as swift %}
+{{ swift.Model("Person", [
+	{"name": "firstName", "type": "String"},
+	{"name": "lastName", "type": "String"},
+	{"name": "nickName", "type": "String"},
+	{"name": "age", "type": "Int"},
+	{"name": "address", "type": "Address", "model": true}
+], ["Description", "Equality", "Hashing", "Builder", "Lenses"]) }}

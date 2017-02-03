@@ -66,7 +66,7 @@ For the first try the easiest option is to use the example templates provided in
 This will override the model files in `output/swift` and `output/objc`.
 
 If you wish to experiment more, please read further.
-After you created your own template, you should modify the last line of `index.php` accordingly: `echo $twig->render('models.template');`, unless you modified the name of the default `models.template` file.
+After you created your own template, you can run your template in `index.php` as `echo $twig->render('your.template');`, unless you modified the existing `*.model` files, as those are automatically getting parsed.
 
 For the templates I used the excellent [Twig](http://twig.sensiolabs.org/doc/templates.html) template engine. 
 I was looking for something that is a language-independent templating system, and the closest I found was Twig. 
@@ -85,11 +85,13 @@ This makes the code generation persistent, that not only you have the output in 
 
 As I mentioned my primary interest was in code generation. 
 And to validate the idea, I started up with the obvious DTO and data-model generators.
+These models are generated from templates like to following.
+If you place a template in any folder with a `.model` extension, it will get picked up and parsed by the compiler, generating the necessary files next to the descriptor file in the same folder.
 
 Let's see the template below
 
 ```
-{% import "objc.template" as objc %}
+{% import "templates/objc.template" as objc %}
 {{ objc.Model("Address", [
 	{"name": "postalCode", "type": "NSNumber*"},
 	{"name": "streetAddress", "type": "NSString*"},
@@ -97,7 +99,7 @@ Let's see the template below
 ], features) }}
 ```
 
-and it's output here:
+and its output here:
 
 * [Address.h](https://github.com/tevelee/CodeGenerator/blob/master/output/objc/Address.h)
 * [Address.m](https://github.com/tevelee/CodeGenerator/blob/master/output/objc/Address.m)
@@ -152,7 +154,7 @@ I included another language to generate model files in: Swift.
 So a similar definition
 
 ```
-{% import "swift.template" as swift %}
+{% import "templates/swift.template" as swift %}
 {{ swift.Model("Address", [
 	{"name": "postalCode", "type": "Int"},
 	{"name": "streetAddress", "type": "String"},

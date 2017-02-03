@@ -567,15 +567,15 @@
     {% set header_content = header_content ~ "\n" ~ _self.JSONDecodingHeader(name, properties) %}
     {% set implementation_content = implementation_content ~ "\n" ~ _self.JSONDecoding(name, properties) %}
 {% endif %}
-{% endspaceless %}
 
-{%- file "output/objc/#{name}.h" = _self.HeaderFile(name, "NSObject", features, header_protocols, ["<Foundation/Foundation.h>"]|merge(imports|unique|sort), properties, header_content, header_globals) -%}
-{%- file "output/objc/#{name}.m" = _self.ImplementationFile(name, features, ["\"#{name}.h\""], properties, implementation_content, implementation_globals) -%}
+{%- file "#{path}/#{name}.h" = _self.HeaderFile(name, "NSObject", features, header_protocols, ["<Foundation/Foundation.h>"]|merge(imports|unique|sort), properties, header_content, header_globals) -%}
+{%- file "#{path}/#{name}.m" = _self.ImplementationFile(name, features, ["\"#{name}.h\""], properties, implementation_content, implementation_globals) -%}
 
 {% if "Builder" in features %}
-{%- file "output/objc/#{name}Builder.h" = _self.BuilderHeaderFile(name, properties) -%}
-{%- file "output/objc/#{name}Builder.m" = _self.BuilderImplementationFile(name, properties) -%}
+{%- file "#{path}/#{name}Builder.h" = _self.BuilderHeaderFile(name, properties) -%}
+{%- file "#{path}/#{name}Builder.m" = _self.BuilderImplementationFile(name, properties) -%}
 {% endif %}
+{% endspaceless %}
 {% endmacro %}
 
 {# ---------------------------------------------------------------------------------------------------------------- #}

@@ -1,0 +1,6 @@
+{% import "templates/swift.template" as swift %}
+{{ swift.Model("Address", [
+	{"name": "postalCode", "type": "Int"},
+	{"name": "streetAddress", "type": "String"},
+	{"name": "number", "type": "Int"}
+], ["Description", "Equality", "Hashing", "Builder", "Lenses"]) }}

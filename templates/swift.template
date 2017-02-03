@@ -150,17 +150,17 @@ extension {{name}} {
 {% if "Description" in features %}
     {% set content = content ~ _self.DescriptionExtension(name, properties) %}
 {% endif %}
-{% endspaceless %}
 
-{%- file "output/swift/#{name}.swift" = _self.ModelFile(name, [], ["Foundation"]|merge(imports), properties, content) %}
+{%- file "#{path}/#{name}.swift" = _self.ModelFile(name, [], ["Foundation"]|merge(imports), properties, content) %}
 
 {%- if "Builder" in features %}
-{% file "output/swift/#{name}Builder.swift" = _self.BuilderFile(name, properties, ["Foundation"]) %}
+{% file "#{path}/#{name}Builder.swift" = _self.BuilderFile(name, properties, ["Foundation"]) %}
 {% endif %}
 
 {%- if "Lenses" in features %}
-{% file "output/swift/#{name}Lenses.swift" = _self.LensesFile(name, properties, ["Foundation"]) %}
+{% file "#{path}/#{name}Lenses.swift" = _self.LensesFile(name, properties, ["Foundation"]) %}
 {% endif %}
+{% endspaceless %}
 {% endmacro %}
 
 {# ---------------------------------------------------------------------------------------------------------------- #}
