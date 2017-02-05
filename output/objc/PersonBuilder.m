@@ -7,12 +7,13 @@
     NSString* _nickName;
     NSInteger _age;
     BOOL _canOrder;
-    NSArray<Address*>* _addresses;
+    Address* _address;
+    NSArray<Address*>* _all;
 }
 
-- (Person *)build
+- (Person *)buildPerson
 {
-    return [Person personWithFirstName:_firstName lastName:_lastName nickName:_nickName age:_age canOrder:_canOrder addresses:_addresses];
+    return [Person personWithFirstName:_firstName lastName:_lastName nickName:_nickName age:_age canOrder:_canOrder address:_address all:_all];
 }
 
 #pragma mark - Initializers
@@ -22,7 +23,7 @@
     return [self new];
 }
 
-+ (instancetype)builderFromPerson:(Person *)existingPerson
++ (instancetype)builderWithPerson:(Person *)existingPerson
 {
     PersonBuilder* builder = [self builder];
     builder = [builder withFirstName:existingPerson.firstName];
@@ -30,7 +31,8 @@
     builder = [builder withNickName:existingPerson.nickName];
     builder = [builder withAge:existingPerson.age];
     builder = [builder withCanOrder:existingPerson.canOrder];
-    builder = [builder withAddresses:existingPerson.addresses];
+    builder = [builder withAddress:existingPerson.address];
+    builder = [builder withAll:existingPerson.all];
     return builder;
 }
 
@@ -66,9 +68,15 @@
     return self;
 }
 
-- (instancetype)withAddresses:(NSArray<Address*>*)addresses
+- (instancetype)withAddress:(Address*)address
 {
-    _addresses = [addresses copy];
+    _address = [address copy];
+    return self;
+}
+
+- (instancetype)withAll:(NSArray<Address*>*)all
+{
+    _all = [all copy];
     return self;
 }
 

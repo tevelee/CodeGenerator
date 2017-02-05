@@ -8,7 +8,7 @@
     BOOL _valid;
 }
 
-- (Address *)build
+- (Address *)buildAddress
 {
     return [Address addressWithPostalCode:_postalCode streetAddress:_streetAddress number:_number valid:_valid];
 }
@@ -20,7 +20,7 @@
     return [self new];
 }
 
-+ (instancetype)builderFromAddress:(Address *)existingAddress
++ (instancetype)builderWithAddress:(Address *)existingAddress
 {
     AddressBuilder* builder = [self builder];
     builder = [builder withPostalCode:existingAddress.postalCode];

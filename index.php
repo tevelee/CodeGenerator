@@ -112,6 +112,14 @@ function files($pattern, $flags = 0)
 
 $twig->addTokenParser(new Twig_TokenParser_File());
 
+$folders = $argv;
+array_shift($folders);
+
+$files = "*.{model}";
+foreach($folders as $value) {
+    $files .= " ".$value."/*.{model}";
+}
+
 $files = files('*.{model}', GLOB_BRACE);
 foreach($files as $file) {
     $twig->addGlobal('path', dirname($file));

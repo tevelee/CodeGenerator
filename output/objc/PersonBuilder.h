@@ -3,12 +3,12 @@
 
 @interface PersonBuilder : NSObject
 
-- (Person *)build;
+- (Person *)buildPerson;
 
 #pragma mark - Initializers
 
 + (instancetype)builder;
-+ (instancetype)builderFromPerson:(Person *)existingPerson;
++ (instancetype)builderWithPerson:(Person *)existingPerson;
 
 #pragma mark - Property setters
 
@@ -17,6 +17,7 @@
 - (instancetype)withNickName:(NSString*)nickName;
 - (instancetype)withAge:(NSInteger)age;
 - (instancetype)withCanOrder:(BOOL)canOrder;
-- (instancetype)withAddresses:(NSArray<Address*>*)addresses;
+- (instancetype)withAddress:(Address*)address;
+- (instancetype)withAll:(NSArray<Address*>*)all;
 
 @end

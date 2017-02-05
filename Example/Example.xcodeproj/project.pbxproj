@@ -7,6 +7,10 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		3A24C5961E0A86E900FCC276 /* PersonLenses.m in Sources */ = {isa = PBXBuildFile; fileRef = 3A24C5951E0A86E900FCC276 /* PersonLenses.m */; };
+		3A24C59C1E0A8BFD00FCC276 /* PersonMinimal.m in Sources */ = {isa = PBXBuildFile; fileRef = 3A24C59B1E0A8BFD00FCC276 /* PersonMinimal.m */; };
+		3A24C59F1E0AB49500FCC276 /* AddressLenses.m in Sources */ = {isa = PBXBuildFile; fileRef = 3A24C59E1E0AB49500FCC276 /* AddressLenses.m */; };
+		3A24C5A21E0AB4BD00FCC276 /* Lenses.m in Sources */ = {isa = PBXBuildFile; fileRef = 3A24C5A11E0AB4BD00FCC276 /* Lenses.m */; };
 		3A3C4DDE1DB5779B00C2329A /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 3A3C4DDD1DB5779B00C2329A /* main.m */; };
 		3A3C4DE11DB5779B00C2329A /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 3A3C4DE01DB5779B00C2329A /* AppDelegate.m */; };
 		3A3C4DE41DB5779B00C2329A /* ViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 3A3C4DE31DB5779B00C2329A /* ViewController.m */; };
@@ -35,6 +39,14 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		3A24C5941E0A86E900FCC276 /* PersonLenses.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PersonLenses.h; sourceTree = "<group>"; };
+		3A24C5951E0A86E900FCC276 /* PersonLenses.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PersonLenses.m; sourceTree = "<group>"; };
+		3A24C59A1E0A8BFD00FCC276 /* PersonMinimal.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PersonMinimal.h; sourceTree = "<group>"; };
+		3A24C59B1E0A8BFD00FCC276 /* PersonMinimal.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PersonMinimal.m; sourceTree = "<group>"; };
+		3A24C59D1E0AB49500FCC276 /* AddressLenses.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AddressLenses.h; sourceTree = "<group>"; };
+		3A24C59E1E0AB49500FCC276 /* AddressLenses.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = AddressLenses.m; sourceTree = "<group>"; };
+		3A24C5A01E0AB4BD00FCC276 /* Lenses.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Lenses.h; sourceTree = "<group>"; };
+		3A24C5A11E0AB4BD00FCC276 /* Lenses.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = Lenses.m; sourceTree = "<group>"; };
 		3A3C4DDA1DB5779B00C2329A /* ObjectiveCExample.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ObjectiveCExample.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		3A3C4DDD1DB5779B00C2329A /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
 		3A3C4DDF1DB5779B00C2329A /* AppDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppDelegate.h; sourceTree = "<group>"; };
@@ -118,6 +130,8 @@
 				3A3C4DE21DB5779B00C2329A /* ViewController.h */,
 				3A3C4DE31DB5779B00C2329A /* ViewController.m */,
 				3A3C4DE51DB5779B00C2329A /* Main.storyboard */,
+				3A24C5A01E0AB4BD00FCC276 /* Lenses.h */,
+				3A24C5A11E0AB4BD00FCC276 /* Lenses.m */,
 				3A3C4DE81DB5779C00C2329A /* Assets.xcassets */,
 				3A3C4DEA1DB5779C00C2329A /* LaunchScreen.storyboard */,
 				3A3C4DED1DB5779C00C2329A /* Info.plist */,
@@ -169,6 +183,8 @@
 		3A3C4E231DB5782300C2329A /* objc */ = {
 			isa = PBXGroup;
 			children = (
+				3A24C59A1E0A8BFD00FCC276 /* PersonMinimal.h */,
+				3A24C59B1E0A8BFD00FCC276 /* PersonMinimal.m */,
 				3A3C4E241DB5782300C2329A /* Address.h */,
 				3A3C4E251DB5782300C2329A /* Address.m */,
 				3A3C4E261DB5782300C2329A /* AddressBuilder.h */,
@@ -178,6 +194,10 @@
 				3A3C4E2A1DB5782300C2329A /* PersonBuilder.h */,
 				3A3C4E2B1DB5782300C2329A /* PersonBuilder.m */,
 				3A5DFD351DE7872D004C5AB7 /* Enum.h */,
+				3A24C5941E0A86E900FCC276 /* PersonLenses.h */,
+				3A24C5951E0A86E900FCC276 /* PersonLenses.m */,
+				3A24C59D1E0AB49500FCC276 /* AddressLenses.h */,
+				3A24C59E1E0AB49500FCC276 /* AddressLenses.m */,
 			);
 			name = objc;
 			path = ../../output/objc;
@@ -291,10 +311,14 @@
 			files = (
 				3A3C4E2F1DB5782300C2329A /* PersonBuilder.m in Sources */,
 				3A3C4E2E1DB5782300C2329A /* Person.m in Sources */,
+				3A24C5961E0A86E900FCC276 /* PersonLenses.m in Sources */,
 				3A3C4DE41DB5779B00C2329A /* ViewController.m in Sources */,
+				3A24C59F1E0AB49500FCC276 /* AddressLenses.m in Sources */,
 				3A3C4DE11DB5779B00C2329A /* AppDelegate.m in Sources */,
 				3A3C4E2D1DB5782300C2329A /* AddressBuilder.m in Sources */,
 				3A3C4E2C1DB5782300C2329A /* Address.m in Sources */,
+				3A24C59C1E0A8BFD00FCC276 /* PersonMinimal.m in Sources */,
+				3A24C5A21E0AB4BD00FCC276 /* Lenses.m in Sources */,
 				3A3C4DDE1DB5779B00C2329A /* main.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
