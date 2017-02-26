@@ -370,6 +370,7 @@
 
 - (NSDictionary<NSString*, id>*)dictionaryRepresentation
 {
+{% set stringFromDate = false %}
     NSMutableDictionary* dictionary = [NSMutableDictionary dictionaryWithCapacity:{{properties|length}}];
     
 {% for property in properties %}
@@ -382,7 +383,7 @@
         for ({{property.type|regexReplace("/NSArray<(.*?)>\\*/", "$1")}} object in self.{{_self.PropertyGetter(property)}}) {
             [{{property.name|lowerCapitalize}} addObject:object.dictionaryRepresentation];
         }
-        [dictionary setObject:self.{{_self.PropertyGetter(property)}}.copy forKey:{{_self.PropertyJSONCodingKey(name, property)}}];
+        [dictionary setObject:{{_self.PropertyGetter(property)}}.copy forKey:{{_self.PropertyJSONCodingKey(name, property)}}];
     }
 {% elseif property.type matches "/Dictionary/" %}
     if (self.{{_self.PropertyGetter(property)}}.count > 0) {
@@ -391,13 +392,22 @@
             {{property.type|regexReplace("/NSDictionary<(.*?),(.*?)>\\*/", "$2")|trim}} object = [self.{{_self.PropertyGetter(property)}} objectForKey:key];
             [{{property.name|lowerCapitalize}} setObject:object.dictionaryRepresentation forKey:key];
         }
-        [dictionary setObject:self.{{_self.PropertyGetter(property)}}.copy forKey:{{_self.PropertyJSONCodingKey(name, property)}}];
+        [dictionary setObject:{{_self.PropertyGetter(property)}}.copy forKey:{{_self.PropertyJSONCodingKey(name, property)}}];
     }
 {% else %}
     if (self.{{_self.PropertyGetter(property)}}) {
         [dictionary setObject:self.{{_self.PropertyGetter(property)}}.dictionaryRepresentation forKey:{{_self.PropertyJSONCodingKey(name, property)}}];
     }
 {% endif %}
+{% elseif property.type starts with "NSDate*" %}
+    {%- set stringFromDate = true %}
+    {%- set format = "yyyy-MM-dd HH:mm:ss" %}
+    {%- if property.json_format is not null %}
+    {%- set format = property.json_format %}
+    {% endif %}
+    if (self.{{_self.PropertyGetter(property)}}) {
+        [dictionary setObject:[self.class stringFromDate:self.{{_self.PropertyGetter(property)}} format:@"{{format}}"] forKey:{{_self.PropertyJSONCodingKey(name, property)}}];
+    }
 {% else %}
     if (self.{{_self.PropertyGetter(property)}}) {
         [dictionary setObject:self.{{_self.PropertyGetter(property)}}.copy forKey:{{_self.PropertyJSONCodingKey(name, property)}}];
@@ -407,6 +417,17 @@
 {% endfor %}
     return dictionary;
 }
+
+{%- if stringFromDate %}
+
++ (NSString*)stringFromDate:(NSDate*)object format:(NSString*)format
+{
+    NSDateFormatter* dateFormatter = [NSDateFormatter new];
+    [dateFormatter setTimeZone:[NSTimeZone timeZoneForSecondsFromGMT:0]];
+    [dateFormatter setDateFormat:format];
+    return [dateFormatter stringFromDate:object];
+}
+{% endif %}
 {% endmacro %}
 
 {# ---------------------------------------------------------------------------------------------------------------- #}
@@ -438,19 +459,38 @@
 
 + (instancetype)modelWithDictionary:(NSDictionary<NSString*, id>*)dictionary
 {
+    if (dictionary == nil) {
+        return nil;
+    }
+{% set numberFromObject = false %}
+{%- set stringFromObject = false %}
+{%- set dateFromObject = false %}
 {% for property in properties %}
 {%- if property.type starts with "NSString" %}
+    {%- set stringFromObject = true %}
     {{property.type}} {{property.name|lowerCapitalize}} = [self stringFromObject:[dictionary objectForKey:{{_self.PropertyJSONCodingKey(name, property)}}]];
 {% elseif property.type starts with "NSNumber" %}
+    {%- set numberFromObject = true %}
     {{property.type}} {{property.name|lowerCapitalize}} = [self numberFromObject:[dictionary objectForKey:{{_self.PropertyJSONCodingKey(name, property)}}]];
 {% elseif property.type matches "/int/" or property.enum %}
+    {%- set numberFromObject = true %}
     {{property.type}} {{property.name|lowerCapitalize}} = [[self numberFromObject:[dictionary objectForKey:{{_self.PropertyJSONCodingKey(name, property)}}]] intValue];
 {% elseif property.type matches "/int|NSInteger|NSUInteger/" or property.enum %}
+    {%- set numberFromObject = true %}
     {{property.type}} {{property.name|lowerCapitalize}} = [[self numberFromObject:[dictionary objectForKey:{{_self.PropertyJSONCodingKey(name, property)}}]] integerValue];
 {% elseif property.type matches "/double/" %}
+    {%- set numberFromObject = true %}
     {{property.type}} {{property.name|lowerCapitalize}} = [[self numberFromObject:[dictionary objectForKey:{{_self.PropertyJSONCodingKey(name, property)}}]] doubleValue];
 {% elseif property.type matches "/float|CGFloat/" %}
+    {%- set numberFromObject = true %}
     {{property.type}} {{property.name|lowerCapitalize}} = [[self numberFromObject:[dictionary objectForKey:{{_self.PropertyJSONCodingKey(name, property)}}]] floatValue];
+{% elseif property.type starts with "NSDate" %}
+    {%- set dateFromObject = true %}
+    {%- set format = "yyyy-MM-dd HH:mm:ss" %}
+    {%- if property.json_format is not null %}
+    {%- set format = property.json_format %}
+    {% endif %}
+    {{property.type}} {{property.name|lowerCapitalize}} = [self dateFromObject:[dictionary objectForKey:{{_self.PropertyJSONCodingKey(name, property)}}] format:@"{{format}}"];
 {% elseif property.type matches "/Array/" and property.model %}
     NSArray<NSDictionary*>* plain{{property.name|upperCapitalize}} = [dictionary objectForKey:{{_self.PropertyJSONCodingKey(name, property)}}];
     {{property.type|regexReplace("/NSArray/", "NSMutableArray")}} {{property.name|lowerCapitalize}} = [NSMutableArray arrayWithCapacity:plain{{property.name|upperCapitalize}}.count];
@@ -474,6 +514,7 @@
 {% endfor %}
     return [self {{name|lowerCapitalize}}{% for property in properties %}{% if loop.first %}With{{property.name|upperCapitalize}}{% else %} {{property.name|lowerCapitalize}}{% endif %}:{{property.name|lowerCapitalize}}{% endfor %}];
 }
+{% if numberFromObject %}
 
 + (NSNumber*)numberFromObject:(id)object
 {
@@ -485,6 +526,8 @@
         return nil;
     }
 }
+{% endif %}
+{% if stringFromObject %}
 
 + (NSString*)stringFromObject:(id)object
 {
@@ -496,6 +539,21 @@
         return nil;
     }
 }
+{% endif %}
+{% if dateFromObject %}
+
++ (NSDate*)dateFromObject:(id)object format:(NSString*)format
+{
+    if ([object isKindOfClass:[NSString class]]) {
+        NSDateFormatter* dateFormatter = [NSDateFormatter new];
+        [dateFormatter setTimeZone:[NSTimeZone timeZoneForSecondsFromGMT:0]];
+        [dateFormatter setDateFormat:format];
+        return [dateFormatter dateFromString:object];
+    } else {
+        return nil;
+    }
+}
+{% endif %}
 {% endmacro %}
 
 {# ---------------------------------------------------------------------------------------------------------------- #}
@@ -504,15 +562,15 @@
 
 {# ---------------------------------------------------------------------------------------------------------------- #}
 
-{% macro Model(name, properties, features, imports = []) %}
+{% macro Model(name, properties, features, imports = [], header = "") %}
 {% spaceless %}
 {% set header_protocols = [] %}
-{% set header_globals = "" %}
+{% set header_globals = header %}
 {% set header_content = "" %}
 {% set implementation_globals = "" %}
 {% set implementation_content = "" %}
 {% for property in properties %}
-    {% if property.model %}
+    {% if property.model and property.type|replace({"*": ""})|trim != name %}
         {% set imports = imports|merge(['"' ~ property.type|regexReplace("/NSArray<(.*?)>/", "$1")|regexReplace("/NSDictionary<(.*?),(.*?)>/", "$2")|replace({"*": ""})|trim ~ '.h"']) %}
     {% endif %}
 {% endfor %}
