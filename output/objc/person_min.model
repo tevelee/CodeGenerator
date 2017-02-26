@@ -1,0 +1,7 @@
+{% import "templates/objc.template" as objc %}
+{{ objc.Model("PersonMinimal", [
+	{"name": "firstName", "type": "NSString*"},
+	{"name": "lastName", "type": "NSString*"},
+	{"name": "nickName", "type": "NSString*"},
+	{"name": "age", "type": "NSInteger"}
+], ["Initializer", "NSCopying", "Description", "Equality", "Hashing"]) }}

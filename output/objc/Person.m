@@ -5,23 +5,26 @@ __unsafe_unretained NSString* const kPersonLastNameNSCodingKey = @"PERSON_LASTNA
 __unsafe_unretained NSString* const kPersonNickNameNSCodingKey = @"PERSON_NICKNAME";
 __unsafe_unretained NSString* const kPersonAgeNSCodingKey = @"PERSON_AGE";
 __unsafe_unretained NSString* const kPersonCanOrderNSCodingKey = @"PERSON_CANORDER";
-__unsafe_unretained NSString* const kPersonAddressesNSCodingKey = @"PERSON_ADDRESSES";
+__unsafe_unretained NSString* const kPersonAddressNSCodingKey = @"PERSON_ADDRESS";
+__unsafe_unretained NSString* const kPersonAllNSCodingKey = @"PERSON_ALL";
 
 __unsafe_unretained NSString* const kPersonFirstNameJSONCodingKey = @"firstName";
 __unsafe_unretained NSString* const kPersonLastNameJSONCodingKey = @"lastName";
 __unsafe_unretained NSString* const kPersonNickNameJSONCodingKey = @"nickName";
 __unsafe_unretained NSString* const kPersonAgeJSONCodingKey = @"age";
 __unsafe_unretained NSString* const kPersonCanOrderJSONCodingKey = @"canOrder";
-__unsafe_unretained NSString* const kPersonAddressesJSONCodingKey = @"addresses";
+__unsafe_unretained NSString* const kPersonAddressJSONCodingKey = @"address";
+__unsafe_unretained NSString* const kPersonAllJSONCodingKey = @"all";
 
 @implementation Person
 
-+ (instancetype)personWithFirstName:(NSString*)firstName lastName:(NSString*)lastName nickName:(NSString*)nickName age:(NSInteger)age canOrder:(BOOL)canOrder addresses:(NSArray<Address*>*)addresses
++ (instancetype)personWithFirstName:(NSString*)firstName lastName:(NSString*)lastName nickName:(NSString*)nickName age:(NSInteger)age canOrder:(BOOL)canOrder address:(Address*)address all:(NSArray<Address*>*)all
 {
-    return [[self alloc] initWithFirstName:firstName lastName:lastName nickName:nickName age:age canOrder:canOrder addresses:addresses];
+    return [[self alloc] initWithFirstName:firstName lastName:lastName nickName:nickName age:age canOrder:canOrder address:address all:all];
 }
 
-- (instancetype)initWithFirstName:(NSString*)firstName lastName:(NSString*)lastName nickName:(NSString*)nickName age:(NSInteger)age canOrder:(BOOL)canOrder addresses:(NSArray<Address*>*)addresses{
+- (instancetype)initWithFirstName:(NSString*)firstName lastName:(NSString*)lastName nickName:(NSString*)nickName age:(NSInteger)age canOrder:(BOOL)canOrder address:(Address*)address all:(NSArray<Address*>*)all
+{
     self = [super init];
     if (self) { 
         _firstName = [firstName copy];
@@ -29,7 +32,8 @@ __unsafe_unretained NSString* const kPersonAddressesJSONCodingKey = @"addresses"
         _nickName = [nickName copy];
         _age = age;
         _canOrder = canOrder;
-        _addresses = [addresses copy];
+        _address = [address copy];
+        _all = [all copy];
     }
     return self;
 }
@@ -81,8 +85,13 @@ __unsafe_unretained NSString* const kPersonAddressesJSONCodingKey = @"addresses"
         return NO;
     }
 
-    BOOL haveEqualAddressesProperties = (self.addresses == nil && person.addresses == nil) || [self.addresses isEqualToArray:person.addresses];
-    if (haveEqualAddressesProperties == NO) {
+    BOOL haveEqualAddressProperties = (self.address == nil && person.address == nil) || [self.address isEqual:person.address];
+    if (haveEqualAddressProperties == NO) {
+        return NO;
+    }
+
+    BOOL haveEqualAllProperties = (self.all == nil && person.all == nil) || [self.all isEqualToArray:person.all];
+    if (haveEqualAllProperties == NO) {
         return NO;
     }
 
@@ -94,9 +103,15 @@ __unsafe_unretained NSString* const kPersonAddressesJSONCodingKey = @"addresses"
 
 - (NSUInteger)hash
 {
-    return super.hash ^ [self.firstName hash] ^ [self.lastName hash] ^ [self.nickName hash] ^ [@(self.age) hash] ^ [@(self.canOrder) hash] ^ [self.addresses hash];
+    return super.hash
+     ^ [self.firstName hash]
+     ^ [self.lastName hash]
+     ^ [self.nickName hash]
+     ^ [@(self.age) hash]
+     ^ [@(self.canOrder) hash]
+     ^ [self.address hash]
+     ^ [self.all hash];
 }
-
 
 #pragma mark -
 #pragma mark NSObject (Description)
@@ -104,7 +119,39 @@ __unsafe_unretained NSString* const kPersonAddressesJSONCodingKey = @"addresses"
 - (NSString *)description
 {
     NSString* existing = super.description;
-    return [[existing substringToIndex:existing.length - 1] stringByAppendingFormat:@"firstName = %@, \n\tlastName = %@, \n\tnickName = %@, \n\tage = %ld, \n\tcanOrder = %ld, \n\taddresses = %@>", self.firstName, self.lastName, self.nickName, self.age, (NSInteger)self.canOrder, self.addresses];
+    return [[existing substringToIndex:existing.length - 1] stringByAppendingFormat:@"firstName = %@, \n\tlastName = %@, \n\tnickName = %@, \n\tage = %ld, \n\tcanOrder = %ld, \n\taddress = %@, \n\tall = %@>", self.firstName, self.lastName, self.nickName, self.age, (NSInteger)self.canOrder, self.address, self.all];
+}
+
+#pragma mark -
+#pragma mark Setters
+
+- (Person*)personBySettingFirstName:(NSString*)firstName
+{
+    return [[self.class alloc] initWithFirstName:firstName lastName:self.lastName.copy nickName:self.nickName.copy age:self.age canOrder:self.canOrder address:self.address.copy all:self.all.copy];
+}
+- (Person*)personBySettingLastName:(NSString*)lastName
+{
+    return [[self.class alloc] initWithFirstName:self.firstName.copy lastName:lastName nickName:self.nickName.copy age:self.age canOrder:self.canOrder address:self.address.copy all:self.all.copy];
+}
+- (Person*)personBySettingNickName:(NSString*)nickName
+{
+    return [[self.class alloc] initWithFirstName:self.firstName.copy lastName:self.lastName.copy nickName:nickName age:self.age canOrder:self.canOrder address:self.address.copy all:self.all.copy];
+}
+- (Person*)personBySettingAge:(NSInteger)age
+{
+    return [[self.class alloc] initWithFirstName:self.firstName.copy lastName:self.lastName.copy nickName:self.nickName.copy age:age canOrder:self.canOrder address:self.address.copy all:self.all.copy];
+}
+- (Person*)personBySettingCanOrder:(BOOL)canOrder
+{
+    return [[self.class alloc] initWithFirstName:self.firstName.copy lastName:self.lastName.copy nickName:self.nickName.copy age:self.age canOrder:canOrder address:self.address.copy all:self.all.copy];
+}
+- (Person*)personBySettingAddress:(Address*)address
+{
+    return [[self.class alloc] initWithFirstName:self.firstName.copy lastName:self.lastName.copy nickName:self.nickName.copy age:self.age canOrder:self.canOrder address:address all:self.all.copy];
+}
+- (Person*)personBySettingAll:(NSArray<Address*>*)all
+{
+    return [[self.class alloc] initWithFirstName:self.firstName.copy lastName:self.lastName.copy nickName:self.nickName.copy age:self.age canOrder:self.canOrder address:self.address.copy all:all];
 }
 
 #pragma mark - 
@@ -116,7 +163,8 @@ __unsafe_unretained NSString* const kPersonAddressesJSONCodingKey = @"addresses"
     [encoder encodeObject:self.lastName forKey:kPersonLastNameNSCodingKey];
     [encoder encodeObject:self.nickName forKey:kPersonNickNameNSCodingKey];
     [encoder encodeInteger:self.age forKey:kPersonAgeNSCodingKey];
-    [encoder encodeObject:self.addresses forKey:kPersonAddressesNSCodingKey];
+    [encoder encodeObject:self.address forKey:kPersonAddressNSCodingKey];
+    [encoder encodeObject:self.all forKey:kPersonAllNSCodingKey];
 }
 
 - (nullable instancetype)initWithCoder:(NSCoder *)decoder
@@ -130,7 +178,8 @@ __unsafe_unretained NSString* const kPersonAddressesJSONCodingKey = @"addresses"
     _lastName = [decoder decodeObjectForKey:kPersonLastNameNSCodingKey];
     _nickName = [decoder decodeObjectForKey:kPersonNickNameNSCodingKey];
     _age = [decoder decodeIntegerForKey:kPersonAgeNSCodingKey];
-    _addresses = [decoder decodeObjectForKey:kPersonAddressesNSCodingKey];
+    _address = [decoder decodeObjectForKey:kPersonAddressNSCodingKey];
+    _all = [decoder decodeObjectForKey:kPersonAllNSCodingKey];
 
     return self;
 }
@@ -140,7 +189,7 @@ __unsafe_unretained NSString* const kPersonAddressesJSONCodingKey = @"addresses"
 
 - (id)copyWithZone:(nullable NSZone *)zone
 {
-    return [[self.class allocWithZone:zone] initWithFirstName:self.firstName.copy lastName:self.lastName.copy nickName:self.nickName.copy age:self.age canOrder:self.canOrder addresses:self.addresses.copy];
+    return [[self.class allocWithZone:zone] initWithFirstName:self.firstName.copy lastName:self.lastName.copy nickName:self.nickName.copy age:self.age canOrder:self.canOrder address:self.address.copy all:self.all.copy];
 }
 
 #pragma mark -
@@ -159,7 +208,7 @@ __unsafe_unretained NSString* const kPersonAddressesJSONCodingKey = @"addresses"
 
 - (NSDictionary<NSString*, id>*)dictionaryRepresentation
 {
-    NSMutableDictionary* dictionary = [NSMutableDictionary dictionaryWithCapacity:6];
+    NSMutableDictionary* dictionary = [NSMutableDictionary dictionaryWithCapacity:7];
     
     if (self.firstName) {
         [dictionary setObject:self.firstName.copy forKey:kPersonFirstNameJSONCodingKey];
@@ -177,12 +226,16 @@ __unsafe_unretained NSString* const kPersonAddressesJSONCodingKey = @"addresses"
 
     [dictionary setObject:@(self.canOrder) forKey:kPersonCanOrderJSONCodingKey];
 
-    if (self.addresses.count > 0) {
-        NSMutableArray* addresses = [NSMutableArray arrayWithCapacity:self.addresses.count];
-        for (Address* object in self.addresses) {
-            [addresses addObject:object.dictionaryRepresentation];
+    if (self.address) {
+        [dictionary setObject:self.address.dictionaryRepresentation forKey:kPersonAddressJSONCodingKey];
+    }
+
+    if (self.all.count > 0) {
+        NSMutableArray* all = [NSMutableArray arrayWithCapacity:self.all.count];
+        for (Address* object in self.all) {
+            [all addObject:object.dictionaryRepresentation];
         }
-        [dictionary setObject:self.addresses.copy forKey:kPersonAddressesJSONCodingKey];
+        [dictionary setObject:self.all.copy forKey:kPersonAllJSONCodingKey];
     }
 
     return dictionary;
@@ -209,14 +262,15 @@ __unsafe_unretained NSString* const kPersonAddressesJSONCodingKey = @"addresses"
     NSString* lastName = [self stringFromObject:[dictionary objectForKey:kPersonLastNameJSONCodingKey]];
     NSString* nickName = [self stringFromObject:[dictionary objectForKey:kPersonNickNameJSONCodingKey]];
     NSInteger age = [[self numberFromObject:[dictionary objectForKey:kPersonAgeJSONCodingKey]] integerValue];
-    BOOL canOrder = [dictionary objectForKey:kPersonCanOrderJSONCodingKey];
-    NSArray<NSDictionary*>* plainAddresses = [dictionary objectForKey:kPersonAddressesJSONCodingKey];
-    NSMutableArray<Address*>* addresses = [NSMutableArray arrayWithCapacity:plainAddresses.count];
-    for (NSDictionary* dictionary in plainAddresses) {
+    BOOL canOrder = [[self numberFromObject:[dictionary objectForKey:kPersonCanOrderJSONCodingKey]] boolValue];
+    Address* address = [Address modelWithDictionary:[dictionary objectForKey:kPersonAddressJSONCodingKey]];
+    NSArray<NSDictionary*>* plainAll = [dictionary objectForKey:kPersonAllJSONCodingKey];
+    NSMutableArray<Address*>* all = [NSMutableArray arrayWithCapacity:plainAll.count];
+    for (NSDictionary* dictionary in plainAll) {
         Address* object = [Address modelWithDictionary:dictionary];
-        [addresses addObject:object];
+        [all addObject:object];
     }
-    return [self personWithFirstName:firstName lastName:lastName nickName:nickName age:age canOrder:canOrder addresses:addresses];
+    return [self personWithFirstName:firstName lastName:lastName nickName:nickName age:age canOrder:canOrder address:address all:all];
 }
 
 + (NSNumber*)numberFromObject:(id)object

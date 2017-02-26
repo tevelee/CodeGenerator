@@ -141,27 +141,28 @@
 {# ---------------------------------------------------------------------------------------------------------------- #}
 
 {% macro InitializerHeader(name, properties) %}
-+ (instancetype){{name|lowerCapitalize}}{% for property in properties %}{% if loop.first %}With{{property.name|upperCapitalize}}{% else %} {{property.name|lowerCapitalize}}{% endif %}:({{property.type}}){{property.name}}{% endfor %};
++ (instancetype){{name|lowerCapitalize}}{% for property in properties %}{% if loop.first %}With{{property.name|upperCapitalize}}{% else %} {{property.name|lowerCapitalize}}{% endif %}:({{property.type}}){{_self.PropertyGetter(property)}}{% endfor %};
 {% endmacro %}
 
 {# ---------------------------------------------------------------------------------------------------------------- #}
 
 {% macro InitializerImplementation(name, properties) %}
-+ (instancetype){{name|lowerCapitalize}}{% for property in properties %}{% if loop.first %}With{{property.name|upperCapitalize}}{% else %} {{property.name|lowerCapitalize}}{% endif %}:({{property.type}}){{property.name}}{% endfor %}
++ (instancetype){{name|lowerCapitalize}}{% for property in properties %}{% if loop.first %}With{{property.name|upperCapitalize}}{% else %} {{property.name|lowerCapitalize}}{% endif %}:({{property.type}}){{_self.PropertyGetter(property)}}{% endfor %}
 
 {
-    return [[self alloc] init{% for property in properties %}{% if loop.first %}With{{property.name|upperCapitalize}}{% else %} {{property.name|lowerCapitalize}}{% endif %}:{{property.name}}{% endfor %}];
+    return [[self alloc] init{% for property in properties %}{% if loop.first %}With{{property.name|upperCapitalize}}{% else %} {{property.name|lowerCapitalize}}{% endif %}:{{_self.PropertyGetter(property)}}{% endfor %}];
 }
 
-- (instancetype)init{% for property in properties %}{% if loop.first %}With{{property.name|upperCapitalize}}{% else %} {{property.name|lowerCapitalize}}{% endif %}:({{property.type}}){{property.name}}{% endfor %}
+- (instancetype)init{% for property in properties %}{% if loop.first %}With{{property.name|upperCapitalize}}{% else %} {{property.name|lowerCapitalize}}{% endif %}:({{property.type}}){{_self.PropertyGetter(property)}}{% endfor %}
+
 {
     self = [super init];
     if (self) { 
 {% for property in properties %}
 {% if property.type ends with "*" %}
-        _{{property.name}} = [{{property.name}} copy];
+        _{{property.name}} = [{{_self.PropertyGetter(property)}} copy];
 {% else %}
-        _{{property.name}} = {{property.name}};
+        _{{property.name}} = {{_self.PropertyGetter(property)}};
 {% endif %}
 {% endfor %}
     }
@@ -226,20 +227,47 @@
 
 {# ---------------------------------------------------------------------------------------------------------------- #}
 
+{% macro ImmutableSetterHeader(name, properties) %}
+#pragma mark - Setters
+
+{% for property in properties %}
+- ({{name}}*){{name|lowerCapitalize}}BySetting{{property.name|upperCapitalize}}:({{property.type}}){{property.name|lowerCapitalize}};
+{% endfor %}
+{% endmacro %}
+
+{# ---------------------------------------------------------------------------------------------------------------- #}
+
+{% macro ImmutableSetterImplementation(name, properties) %}
+#pragma mark -
+#pragma mark Setters
+
+{% for prop in properties %}
+- ({{name}}*){{name|lowerCapitalize}}BySetting{{prop.name|upperCapitalize}}:({{prop.type}}){{_self.PropertyGetter(prop)}}
+{
+    return [[self.class alloc] init{% for property in properties %}{% if loop.first %}With{{property.name|upperCapitalize}}{% else %} {{property.name|lowerCapitalize}}{% endif %}:{% if prop.name != property.name %}self.{% endif %}{{_self.PropertyGetter(property)}}{% if prop.name != property.name and property.type ends with "*" %}.copy{% endif %}{% endfor %}];
+}
+{% endfor %}
+{% endmacro %}
+
+{# ---------------------------------------------------------------------------------------------------------------- #}
+
 {% macro Hashing(name, properties) %}
 #pragma mark -
 #pragma mark NSObject (Hashing)
 
 - (NSUInteger)hash
 {
-    return super.hash{% for property in properties %} ^ [{% if property.type ends with "*" %}self.{{_self.PropertyGetter(property)}}{% elseif property.type matches "/int|NSInteger|NSUInteger|double|float|CGFloat|BOOL/" or property.enum %}@(self.{{_self.PropertyGetter(property)}}){% endif %} hash]{% endfor %};
+    return super.hash
+{% for property in properties %}
+     ^ [{% if property.type ends with "*" %}self.{{_self.PropertyGetter(property)}}{% elseif property.type matches "/int|NSInteger|NSUInteger|double|float|CGFloat|BOOL/" or property.enum %}@(self.{{_self.PropertyGetter(property)}}){% endif %} hash]{% if loop.last %};{% endif %}
+
+{% endfor %}
 }
 {% endmacro %}
 
 {# ---------------------------------------------------------------------------------------------------------------- #}
 
 {% macro Description(name, properties) %}
-
 #pragma mark -
 #pragma mark NSObject (Description)
 
@@ -258,12 +286,12 @@
 
 @interface {{name}}Builder : NSObject
 
-- ({{name}} *)build;
+- ({{name}} *)build{{name}};
 
 #pragma mark - Initializers
 
 + (instancetype)builder;
-+ (instancetype)builderFrom{{name|upperCapitalize}}:({{name}} *)existing{{name|upperCapitalize}};
++ (instancetype)builderWith{{name|upperCapitalize}}:({{name}} *)existing{{name|upperCapitalize}};
 
 #pragma mark - Property setters
 
@@ -273,6 +301,10 @@
 
 @end
 {% endmacro %}
+
+{# ---------------------------------------------------------------------------------------------------------------- #}
+
+{% macro WrappedType(property) %}{% if property.type matches "/int|NSInteger|NSUInteger|double|float|CGFloat|BOOL/" or property.enum %}NSNumber*{% else %}{{property.type}}{% endif %}{% endmacro %}
 
 {# ---------------------------------------------------------------------------------------------------------------- #}
 
@@ -286,7 +318,7 @@
 {% endfor %}
 }
 
-- ({{name}} *)build
+- ({{name}} *)build{{name}}
 {
     return [{{name}} {{name|lowerCapitalize}}{% for property in properties %}{% if loop.first %}With{{property.name|upperCapitalize}}{% else %} {{property.name|lowerCapitalize}}{% endif %}:_{{property.name}}{% endfor %}];
 }
@@ -298,7 +330,7 @@
     return [self new];
 }
 
-+ (instancetype)builderFrom{{name|upperCapitalize}}:({{name}} *)existing{{name|upperCapitalize}}
++ (instancetype)builderWith{{name|upperCapitalize}}:({{name}} *)existing{{name|upperCapitalize}}
 {
     {{name}}Builder* builder = [self builder];
 {% for property in properties %}
@@ -321,6 +353,116 @@
 }
 
 {% endfor %}
+@end
+{% endmacro %}
+
+{% macro LensesHeaderFile(name, properties) %}
+#import <Foundation/Foundation.h>
+#import "{{name}}.h"
+#import "Lenses.h"
+{% for property in properties %}
+{% if property.type matches "/Array|Dictionary/" %}
+{% elseif property.model %}
+#import "{{property.type|regexReplace("/NSArray<(.*?)\\>\\*/", "$1")|replace({"*": ""})}}Lenses.h"
+{% endif %}
+{% endfor %}
+
+@interface {{name}}Lenses : NSObject
+
+{% for property in properties %}
+{% if property.type matches "/Array|Dictionary/" %}
+{% else %}
++ (Lens<{{name}}*, {{_self.WrappedType(property)}}>*){{property.name|lowerCapitalize}};
+{% endif %}
+{% endfor %}
+
+@end
+
+@interface BoundLensTo{{name}}<__covariant Whole> : BoundLens
+
+{% for property in properties %}
+{% if property.type matches "/Array|Dictionary/" %}
+{% elseif property.model %}
+- (BoundLensTo{{property.name|upperCapitalize}}<Whole>*){{property.name|lowerCapitalize}};
+{% else %}
+- (BoundLens<Whole, {{_self.WrappedType(property)}}>*){{property.name|lowerCapitalize}};
+{% endif %}
+{% endfor %}
+
+@end
+
+@interface {{name}} (Lens)
+
+- (BoundLensTo{{name}}*)lens;
+
+@end
+{% endmacro %}
+
+{# ---------------------------------------------------------------------------------------------------------------- #}
+
+{% macro LensesImplementationFile(name, properties) %}
+#import "{{name}}Lenses.h"
+
+@implementation {{name}}Lenses
+
+{% for property in properties %}
+{% if property.type matches "/Array|Dictionary/" %}
+{% else %}
++ (Lens<{{name}}*, {{_self.WrappedType(property)}}>*){{property.name|lowerCapitalize}}
+{
+    return [Lens lensWithGet:^{{_self.WrappedType(property)}}({{name}}* whole){
+{% if property.type matches "/BOOL|int|NSInteger|NSUInteger|double|float|CGFloat/" or property.enum %}
+        return @(whole.{{property.name|lowerCapitalize}});
+{% else %}
+        return whole.{{property.name|lowerCapitalize}};
+{% endif %}
+    } set:^{{name}}*({{name}}* whole, {{_self.WrappedType(property)}} part) {
+{% if property.type starts with "BOOL" %}
+        return [whole {{name|lowerCapitalize}}BySetting{{property.name|upperCapitalize}}:part.boolValue];
+{% elseif property.type matches "/NSInteger|NSUInteger/" or property.enum %}
+        return [whole {{name|lowerCapitalize}}BySetting{{property.name|upperCapitalize}}:part.integerValue];
+{% elseif property.type matches "/int/" %}
+        return [whole {{name|lowerCapitalize}}BySetting{{property.name|upperCapitalize}}:part.intValue];
+{% elseif property.type matches "/double/" %}
+        return [whole {{name|lowerCapitalize}}BySetting{{property.name|upperCapitalize}}:part.doubleValue];
+{% elseif property.type matches "/float|CGFloat/" %}
+        return [whole {{name|lowerCapitalize}}BySetting{{property.name|upperCapitalize}}:part.floatValue];
+{% else %}
+        return [whole {{name|lowerCapitalize}}BySetting{{property.name|upperCapitalize}}:part];
+{% endif %}
+    }];
+}
+{% endif %}
+{% endfor %}
+
+@end
+
+@implementation BoundLensTo{{name}}
+
+{% for property in properties %}
+{% if property.type matches "/Array|Dictionary/" %}
+{% elseif property.model %}
+- (BoundLensTo{{property.name|upperCapitalize}} *){{property.name|lowerCapitalize}} 
+{
+    return [BoundLensTo{{property.name|upperCapitalize}} lensWithParent:self sublens:[{{name}}Lenses {{property.name|lowerCapitalize}}]];
+}
+{% else %}
+- (BoundLens*){{property.name|lowerCapitalize}} 
+{
+    return [BoundLens lensWithParent:self sublens:[{{name}}Lenses {{property.name|lowerCapitalize}}]];
+}
+{% endif %}
+{% endfor %}
+
+@end
+
+@implementation {{name}} (Lens)
+
+- (BoundLensTo{{name}}*)lens
+{
+    return [BoundLensTo{{name}} lensWithInstance:self lens:[Lens identityLens]];
+}
+
 @end
 {% endmacro %}
 
@@ -379,7 +521,7 @@
 {% elseif property.model %}
 {% if property.type matches "/Array/" %}
     if (self.{{_self.PropertyGetter(property)}}.count > 0) {
-        NSMutableArray* {{property.name|lowerCapitalize}} = [NSMutableArray arrayWithCapacity:self.{{_self.PropertyGetter(property)}}.count];
+        NSMutableArray* {{_self.PropertyGetter(property)}} = [NSMutableArray arrayWithCapacity:self.{{_self.PropertyGetter(property)}}.count];
         for ({{property.type|regexReplace("/NSArray<(.*?)>\\*/", "$1")}} object in self.{{_self.PropertyGetter(property)}}) {
             [{{property.name|lowerCapitalize}} addObject:object.dictionaryRepresentation];
         }
@@ -387,7 +529,7 @@
     }
 {% elseif property.type matches "/Dictionary/" %}
     if (self.{{_self.PropertyGetter(property)}}.count > 0) {
-        NSMutableDictionary* {{property.name|lowerCapitalize}} = [NSMutableDictionary dictionaryWithCapacity:self.{{_self.PropertyGetter(property)}}.count];
+        NSMutableDictionary* {{_self.PropertyGetter(property)}} = [NSMutableDictionary dictionaryWithCapacity:self.{{_self.PropertyGetter(property)}}.count];
         for ({{property.type|regexReplace("/NSDictionary<(.*?),(.*?)>\\*/", "$1")|trim}} key in self.{{_self.PropertyGetter(property)}}) {
             {{property.type|regexReplace("/NSDictionary<(.*?),(.*?)>\\*/", "$2")|trim}} object = [self.{{_self.PropertyGetter(property)}} objectForKey:key];
             [{{property.name|lowerCapitalize}} setObject:object.dictionaryRepresentation forKey:key];
@@ -468,51 +610,54 @@
 {% for property in properties %}
 {%- if property.type starts with "NSString" %}
     {%- set stringFromObject = true %}
-    {{property.type}} {{property.name|lowerCapitalize}} = [self stringFromObject:[dictionary objectForKey:{{_self.PropertyJSONCodingKey(name, property)}}]];
+    {{property.type}} {{_self.PropertyGetter(property)}} = [self stringFromObject:[dictionary objectForKey:{{_self.PropertyJSONCodingKey(name, property)}}]];
 {% elseif property.type starts with "NSNumber" %}
     {%- set numberFromObject = true %}
-    {{property.type}} {{property.name|lowerCapitalize}} = [self numberFromObject:[dictionary objectForKey:{{_self.PropertyJSONCodingKey(name, property)}}]];
+    {{property.type}} {{_self.PropertyGetter(property)}} = [self numberFromObject:[dictionary objectForKey:{{_self.PropertyJSONCodingKey(name, property)}}]];
+{% elseif property.type starts with "BOOL" %}
+    {%- set numberFromObject = true %}
+    {{property.type}} {{_self.PropertyGetter(property)}} = [[self numberFromObject:[dictionary objectForKey:{{_self.PropertyJSONCodingKey(name, property)}}]] boolValue];
 {% elseif property.type matches "/int/" or property.enum %}
     {%- set numberFromObject = true %}
-    {{property.type}} {{property.name|lowerCapitalize}} = [[self numberFromObject:[dictionary objectForKey:{{_self.PropertyJSONCodingKey(name, property)}}]] intValue];
+    {{property.type}} {{_self.PropertyGetter(property)}} = [[self numberFromObject:[dictionary objectForKey:{{_self.PropertyJSONCodingKey(name, property)}}]] intValue];
 {% elseif property.type matches "/int|NSInteger|NSUInteger/" or property.enum %}
     {%- set numberFromObject = true %}
-    {{property.type}} {{property.name|lowerCapitalize}} = [[self numberFromObject:[dictionary objectForKey:{{_self.PropertyJSONCodingKey(name, property)}}]] integerValue];
+    {{property.type}} {{_self.PropertyGetter(property)}} = [[self numberFromObject:[dictionary objectForKey:{{_self.PropertyJSONCodingKey(name, property)}}]] integerValue];
 {% elseif property.type matches "/double/" %}
     {%- set numberFromObject = true %}
-    {{property.type}} {{property.name|lowerCapitalize}} = [[self numberFromObject:[dictionary objectForKey:{{_self.PropertyJSONCodingKey(name, property)}}]] doubleValue];
+    {{property.type}} {{_self.PropertyGetter(property)}} = [[self numberFromObject:[dictionary objectForKey:{{_self.PropertyJSONCodingKey(name, property)}}]] doubleValue];
 {% elseif property.type matches "/float|CGFloat/" %}
     {%- set numberFromObject = true %}
-    {{property.type}} {{property.name|lowerCapitalize}} = [[self numberFromObject:[dictionary objectForKey:{{_self.PropertyJSONCodingKey(name, property)}}]] floatValue];
+    {{property.type}} {{_self.PropertyGetter(property)}} = [[self numberFromObject:[dictionary objectForKey:{{_self.PropertyJSONCodingKey(name, property)}}]] floatValue];
 {% elseif property.type starts with "NSDate" %}
     {%- set dateFromObject = true %}
     {%- set format = "yyyy-MM-dd HH:mm:ss" %}
     {%- if property.json_format is not null %}
     {%- set format = property.json_format %}
     {% endif %}
-    {{property.type}} {{property.name|lowerCapitalize}} = [self dateFromObject:[dictionary objectForKey:{{_self.PropertyJSONCodingKey(name, property)}}] format:@"{{format}}"];
+    {{property.type}} {{_self.PropertyGetter(property)}} = [self dateFromObject:[dictionary objectForKey:{{_self.PropertyJSONCodingKey(name, property)}}] format:@"{{format}}"];
 {% elseif property.type matches "/Array/" and property.model %}
     NSArray<NSDictionary*>* plain{{property.name|upperCapitalize}} = [dictionary objectForKey:{{_self.PropertyJSONCodingKey(name, property)}}];
-    {{property.type|regexReplace("/NSArray/", "NSMutableArray")}} {{property.name|lowerCapitalize}} = [NSMutableArray arrayWithCapacity:plain{{property.name|upperCapitalize}}.count];
+    {{property.type|regexReplace("/NSArray/", "NSMutableArray")}} {{_self.PropertyGetter(property)}} = [NSMutableArray arrayWithCapacity:plain{{property.name|upperCapitalize}}.count];
     for (NSDictionary* dictionary in plain{{property.name|upperCapitalize}}) {
         {{property.type|regexReplace("/NSArray<(.*?)>\\*/", "$1")|trim}} object = [{{property.type|regexReplace("/NSArray<(.*?)>\\*/", "$1")|replace({"*": ""})|trim}} modelWithDictionary:dictionary];
-        [{{property.name|lowerCapitalize}} addObject:object];
+        [{{_self.PropertyGetter(property)}} addObject:object];
     }
 {% elseif property.type matches "/Dictionary/" and property.model %}
     NSDictionary<{{property.type|regexReplace("/NSDictionary<(.*?),(.*?)>\\*/", "$1")|trim}}, NSDictionary*>* plain{{property.name|upperCapitalize}} = [dictionary objectForKey:{{_self.PropertyJSONCodingKey(name, property)}}];
-    {{property.type|regexReplace("/NSDictionary/", "NSMutableDictionary")}} {{property.name|lowerCapitalize}} = [NSMutableDictionary dictionaryWithCapacity:plain{{property.name|upperCapitalize}}.count];
+    {{property.type|regexReplace("/NSDictionary/", "NSMutableDictionary")}} {{_self.PropertyGetter(property)}} = [NSMutableDictionary dictionaryWithCapacity:plain{{property.name|upperCapitalize}}.count];
     for ({{property.type|regexReplace("/NSDictionary<(.*?),(.*?)>\\*/", "$1")|trim}} key in plain{{property.name|upperCapitalize}}) {
         NSDictionary* plainObject = [plain{{property.name|upperCapitalize}} objectForKey:key];
         {{property.type|regexReplace("/NSDictionary<(.*?),(.*?)>\\*/", "$2")|trim}} object = [{{property.type|regexReplace("/NSDictionary<(.*?),(.*?)>\\*/", "$2")|replace({"*": ""})|trim}} modelWithDictionary:plainObject];
-        [{{property.name|lowerCapitalize}} setObject:object forKey:key];
+        [{{_self.PropertyGetter(property)}} setObject:object forKey:key];
     }
 {% elseif property.model %}
-    {{property.type}} {{property.name|lowerCapitalize}} = [{{property.type|replace({"*": ""})|trim}} modelWithDictionary:[dictionary objectForKey:{{_self.PropertyJSONCodingKey(name, property)}}]];
+    {{property.type}} {{_self.PropertyGetter(property)}} = [{{property.type|replace({"*": ""})|trim}} modelWithDictionary:[dictionary objectForKey:{{_self.PropertyJSONCodingKey(name, property)}}]];
 {% else %}
-    {{property.type}} {{property.name|lowerCapitalize}} = [dictionary objectForKey:{{_self.PropertyJSONCodingKey(name, property)}}];
+    {{property.type}} {{_self.PropertyGetter(property)}} = [dictionary objectForKey:{{_self.PropertyJSONCodingKey(name, property)}}];
 {% endif %}
 {% endfor %}
-    return [self {{name|lowerCapitalize}}{% for property in properties %}{% if loop.first %}With{{property.name|upperCapitalize}}{% else %} {{property.name|lowerCapitalize}}{% endif %}:{{property.name|lowerCapitalize}}{% endfor %}];
+    return [self {{name|lowerCapitalize}}{% for property in properties %}{% if loop.first %}With{{property.name|upperCapitalize}}{% else %} {{property.name|lowerCapitalize}}{% endif %}:{{_self.PropertyGetter(property)}}{% endfor %}];
 }
 {% if numberFromObject %}
 
@@ -595,6 +740,11 @@
     {% set implementation_content = implementation_content ~ "\n" ~ _self.Description(name, properties) %}
 {% endif %}
 
+{% if "ImmutableSetters" in features %}
+    {% set header_content = header_content ~ "\n" ~ _self.ImmutableSetterHeader(name, properties) %}
+    {% set implementation_content = implementation_content ~ "\n" ~ _self.ImmutableSetterImplementation(name, properties) %}
+{% endif %}
+
 {% if "NSCoding" in features %}
     {% set header_protocols = header_protocols|merge(["NSCoding"]) %}
     {% set header_globals = header_globals ~ _self.NSCodingGlobalExtern(name, properties) %}
@@ -632,6 +782,11 @@
 {% if "Builder" in features %}
 {%- file "#{path}/#{name}Builder.h" = _self.BuilderHeaderFile(name, properties) -%}
 {%- file "#{path}/#{name}Builder.m" = _self.BuilderImplementationFile(name, properties) -%}
+{% endif %}
+
+{%- if "Lenses" in features %}
+{% file "#{path}/#{name}Lenses.h" = _self.LensesHeaderFile(name, properties, ["Foundation"]) %}
+{% file "#{path}/#{name}Lenses.m" = _self.LensesImplementationFile(name, properties, ["Foundation"]) %}
 {% endif %}
 {% endspaceless %}
 {% endmacro %}

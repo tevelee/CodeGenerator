@@ -18,9 +18,16 @@ FOUNDATION_EXPORT __unsafe_unretained NSString* const kAddressValidJSONCodingKey
 @property (nonatomic, assign, readonly) NumberEnum number;
 @property (nonatomic, assign, readonly, getter = isValid) BOOL valid;
 
-+ (instancetype)addressWithPostalCode:(NSNumber*)postalCode streetAddress:(NSString*)streetAddress number:(NumberEnum)number valid:(BOOL)valid;
++ (instancetype)addressWithPostalCode:(NSNumber*)postalCode streetAddress:(NSString*)streetAddress number:(NumberEnum)number valid:(BOOL)isValid;
 
 - (BOOL)isEqualToAddress:(Address *)address;
+
+#pragma mark - Setters
+
+- (Address*)addressBySettingPostalCode:(NSNumber*)postalCode;
+- (Address*)addressBySettingStreetAddress:(NSString*)streetAddress;
+- (Address*)addressBySettingNumber:(NumberEnum)number;
+- (Address*)addressBySettingValid:(BOOL)valid;
 
 #pragma mark - JSON Encoding
 

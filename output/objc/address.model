@@ -4,4 +4,4 @@
 	{"name": "streetAddress", "type": "NSString*"},
 	{"name": "number", "type": "NumberEnum", "enum": true},
 	{"name": "valid", "type": "BOOL", "isPrefixedGetter": true}
-], ["ImmutableProperties", "Initializer", "NSCoding", "NSCopying", "Description", "Equality", "Hashing", "Builder", "JSONEncoding", "JSONDecoding"], ['"Enum.h"']) }}
+], ["ImmutableProperties", "ImmutableSetters", "Lenses", "Initializer", "NSCoding", "NSCopying", "Description", "Equality", "Hashing", "Builder", "JSONEncoding", "JSONDecoding"], ['"Enum.h"']) }}

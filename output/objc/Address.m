@@ -12,18 +12,19 @@ __unsafe_unretained NSString* const kAddressValidJSONCodingKey = @"valid";
 
 @implementation Address
 
-+ (instancetype)addressWithPostalCode:(NSNumber*)postalCode streetAddress:(NSString*)streetAddress number:(NumberEnum)number valid:(BOOL)valid
++ (instancetype)addressWithPostalCode:(NSNumber*)postalCode streetAddress:(NSString*)streetAddress number:(NumberEnum)number valid:(BOOL)isValid
 {
-    return [[self alloc] initWithPostalCode:postalCode streetAddress:streetAddress number:number valid:valid];
+    return [[self alloc] initWithPostalCode:postalCode streetAddress:streetAddress number:number valid:isValid];
 }
 
-- (instancetype)initWithPostalCode:(NSNumber*)postalCode streetAddress:(NSString*)streetAddress number:(NumberEnum)number valid:(BOOL)valid{
+- (instancetype)initWithPostalCode:(NSNumber*)postalCode streetAddress:(NSString*)streetAddress number:(NumberEnum)number valid:(BOOL)isValid
+{
     self = [super init];
     if (self) { 
         _postalCode = [postalCode copy];
         _streetAddress = [streetAddress copy];
         _number = number;
-        _valid = valid;
+        _valid = isValid;
     }
     return self;
 }
@@ -78,9 +79,12 @@ __unsafe_unretained NSString* const kAddressValidJSONCodingKey = @"valid";
 
 - (NSUInteger)hash
 {
-    return super.hash ^ [self.postalCode hash] ^ [self.streetAddress hash] ^ [@(self.number) hash] ^ [@(self.isValid) hash];
+    return super.hash
+     ^ [self.postalCode hash]
+     ^ [self.streetAddress hash]
+     ^ [@(self.number) hash]
+     ^ [@(self.isValid) hash];
 }
-
 
 #pragma mark -
 #pragma mark NSObject (Description)
@@ -89,6 +93,26 @@ __unsafe_unretained NSString* const kAddressValidJSONCodingKey = @"valid";
 {
     NSString* existing = super.description;
     return [[existing substringToIndex:existing.length - 1] stringByAppendingFormat:@"postalCode = %@, \n\tstreetAddress = %@, \n\tnumber = %ld, \n\tvalid = %ld>", self.postalCode, self.streetAddress, self.number, (NSInteger)self.isValid];
+}
+
+#pragma mark -
+#pragma mark Setters
+
+- (Address*)addressBySettingPostalCode:(NSNumber*)postalCode
+{
+    return [[self.class alloc] initWithPostalCode:postalCode streetAddress:self.streetAddress.copy number:self.number valid:self.isValid];
+}
+- (Address*)addressBySettingStreetAddress:(NSString*)streetAddress
+{
+    return [[self.class alloc] initWithPostalCode:self.postalCode.copy streetAddress:streetAddress number:self.number valid:self.isValid];
+}
+- (Address*)addressBySettingNumber:(NumberEnum)number
+{
+    return [[self.class alloc] initWithPostalCode:self.postalCode.copy streetAddress:self.streetAddress.copy number:number valid:self.isValid];
+}
+- (Address*)addressBySettingValid:(BOOL)isValid
+{
+    return [[self.class alloc] initWithPostalCode:self.postalCode.copy streetAddress:self.streetAddress.copy number:self.number valid:isValid];
 }
 
 #pragma mark - 
@@ -176,8 +200,8 @@ __unsafe_unretained NSString* const kAddressValidJSONCodingKey = @"valid";
     NSNumber* postalCode = [self numberFromObject:[dictionary objectForKey:kAddressPostalCodeJSONCodingKey]];
     NSString* streetAddress = [self stringFromObject:[dictionary objectForKey:kAddressStreetAddressJSONCodingKey]];
     NumberEnum number = [[self numberFromObject:[dictionary objectForKey:kAddressNumberJSONCodingKey]] intValue];
-    BOOL valid = [dictionary objectForKey:kAddressValidJSONCodingKey];
-    return [self addressWithPostalCode:postalCode streetAddress:streetAddress number:number valid:valid];
+    BOOL isValid = [[self numberFromObject:[dictionary objectForKey:kAddressValidJSONCodingKey]] boolValue];
+    return [self addressWithPostalCode:postalCode streetAddress:streetAddress number:number valid:isValid];
 }
 
 + (NSNumber*)numberFromObject:(id)object

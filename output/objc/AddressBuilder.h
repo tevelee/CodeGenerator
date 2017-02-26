@@ -3,12 +3,12 @@
 
 @interface AddressBuilder : NSObject
 
-- (Address *)build;
+- (Address *)buildAddress;
 
 #pragma mark - Initializers
 
 + (instancetype)builder;
-+ (instancetype)builderFromAddress:(Address *)existingAddress;
++ (instancetype)builderWithAddress:(Address *)existingAddress;
 
 #pragma mark - Property setters
 
