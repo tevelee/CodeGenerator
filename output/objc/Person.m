@@ -235,12 +235,11 @@ __unsafe_unretained NSString* const kPersonAllJSONCodingKey = @"all";
         for (Address* object in self.all) {
             [all addObject:object.dictionaryRepresentation];
         }
-        [dictionary setObject:self.all.copy forKey:kPersonAllJSONCodingKey];
+        [dictionary setObject:all.copy forKey:kPersonAllJSONCodingKey];
     }
 
     return dictionary;
 }
-
 #pragma mark -
 #pragma mark JSON Decoding
 
@@ -258,6 +257,9 @@ __unsafe_unretained NSString* const kPersonAllJSONCodingKey = @"all";
 
 + (instancetype)modelWithDictionary:(NSDictionary<NSString*, id>*)dictionary
 {
+    if (dictionary == nil) {
+        return nil;
+    }
     NSString* firstName = [self stringFromObject:[dictionary objectForKey:kPersonFirstNameJSONCodingKey]];
     NSString* lastName = [self stringFromObject:[dictionary objectForKey:kPersonLastNameJSONCodingKey]];
     NSString* nickName = [self stringFromObject:[dictionary objectForKey:kPersonNickNameJSONCodingKey]];

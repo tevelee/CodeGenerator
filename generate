@@ -1,2 +1,3 @@
 #!/bin/bash
+php composer.phar install --quiet
 php index.php

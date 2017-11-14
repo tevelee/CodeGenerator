@@ -179,7 +179,6 @@ __unsafe_unretained NSString* const kAddressValidJSONCodingKey = @"valid";
 
     return dictionary;
 }
-
 #pragma mark -
 #pragma mark JSON Decoding
 
@@ -197,6 +196,9 @@ __unsafe_unretained NSString* const kAddressValidJSONCodingKey = @"valid";
 
 + (instancetype)modelWithDictionary:(NSDictionary<NSString*, id>*)dictionary
 {
+    if (dictionary == nil) {
+        return nil;
+    }
     NSNumber* postalCode = [self numberFromObject:[dictionary objectForKey:kAddressPostalCodeJSONCodingKey]];
     NSString* streetAddress = [self stringFromObject:[dictionary objectForKey:kAddressStreetAddressJSONCodingKey]];
     NumberEnum number = [[self numberFromObject:[dictionary objectForKey:kAddressNumberJSONCodingKey]] intValue];
